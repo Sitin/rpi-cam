@@ -11,7 +11,7 @@ def get_frame_manager(name: str, *args, **kwargs) -> FrameManager:
         from rpi_cam.capture.opencv_capture.opencv_frame_manager import OpenCVFrameManager
         return OpenCVFrameManager(*args, **kwargs)
     if name == Drivers.RPI:
-        from rpi_cam.capture.rpi_capture.opencv_frame_manager import PiCameraFrameManager
+        from rpi_cam.capture.rpi_capture.rpi_frame_manager import PiCameraFrameManager
         return PiCameraFrameManager(*args, **kwargs)
     else:
         raise ValueError('Driver is not supported: {name}.'.format(name=name))

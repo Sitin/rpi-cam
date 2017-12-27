@@ -10,18 +10,18 @@ from rpi_cam.tools import get_logger, SERVER_DIR
 
 DEFAULT_PATH = os.path.join(SERVER_DIR, 'cam_data')
 DEFAULT_THUMB_RESOLUTION = (320, 240)
-JPG = 'jpg'
 
 logger = get_logger('rpi_cam.capture.frame_manager')
 
 
 class FrameManager(object):
-    def __init__(self, path=DEFAULT_PATH, thumb_resolution=DEFAULT_THUMB_RESOLUTION, extension=JPG):
+    def __init__(self, path=DEFAULT_PATH, thumb_resolution=DEFAULT_THUMB_RESOLUTION):
         self.path = path
         self.thumbs_path = os.path.join(path, 'thumbs')
         self.thumb_resolution = thumb_resolution
         self.image_resolution = None
-        self.extension = extension
+        self.extension = 'jpg'
+        self.format = 'jpeg'
         self.cap = None
         self.is_started = False
 
@@ -56,24 +56,26 @@ class FrameManager(object):
         ))
 
     def make_thumb(self):
-        thumb = self.get_thumb()
         filename = self.get_thumb_filename()
+        self._make_thumb(filename)
+        return os.path.basename(filename)
+
+    def _make_thumb(self, filename):
+        thumb = self.get_thumb()
 
         if thumb is not None:
             self.write_img(filename, thumb)
-            return os.path.basename(filename)
-        else:
-            return None
 
     def shoot(self):
-        img = self.get_frame()
         filename = self.get_filename()
+        self._shoot(filename)
+        return os.path.basename(filename)
+
+    def _shoot(self, filename):
+        img = self.get_frame()
 
         if img is not None:
             self.write_img(filename, img)
-            return os.path.basename(filename)
-        else:
-            return None
 
     @abc.abstractmethod
     def start(self):
