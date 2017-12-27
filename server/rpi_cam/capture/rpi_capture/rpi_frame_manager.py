@@ -1,7 +1,7 @@
 from io import BytesIO
 
 import picamera
-from Pillow import Image
+from PIL import Image
 
 from rpi_cam.capture.frame_manager import FrameManager
 
@@ -31,6 +31,7 @@ class PiCameraFrameManager(FrameManager):
 
     def _shoot(self, filename):
         self.cap.capture(filename)
+        self.image_resolution = Image.open(filename).size
 
     def write_img(self, filename, img):
         img.save(filename)
