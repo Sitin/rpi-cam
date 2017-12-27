@@ -77,7 +77,7 @@ async def stream_thumbs():
             }, namespace='/cam')
 
 
-def run(driver=Drivers.OPENCV, **kwargs):
+def run(driver=Drivers.RPI, **kwargs):
     app['frame_rate'] = 6
     app['client'] = 0
 
