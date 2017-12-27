@@ -13,7 +13,7 @@ fi
 
 pip install -r ${DIR}/../server/requirements.txt
 
-if [ ${RPI_CAM_DEV_MODE} = 'True' ]; then
+if [ "${RPI_CAM_DEV_MODE}" = 'True' ]; then
     pip install -r ${CAPTURE_DIR}/opencv_capture/requirements.txt
 else
     pip install -r ${CAPTURE_DIR}/rpi_capture/requirements.txt
