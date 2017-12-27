@@ -1,4 +1,7 @@
 def crop_to_ratio(img, ratio=4/3):
+    if img is None:
+        return None
+
     (height, width, *_) = img.shape
 
     if width * ratio > height:

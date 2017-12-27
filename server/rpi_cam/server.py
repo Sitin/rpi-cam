@@ -87,7 +87,7 @@ def run(driver=Drivers.OPENCV, **kwargs):
     app.router.add_static('/', os.path.join(PROJECT_DIR, 'client', 'rpi-cam-web', 'build'))
 
     sio.start_background_task(stream_thumbs)
-    web.run_app(app, host='localhost', **kwargs)
+    web.run_app(app, **kwargs)
 
     app['frame_manager'].stop()
 
