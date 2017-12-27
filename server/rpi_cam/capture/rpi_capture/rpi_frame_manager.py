@@ -1,4 +1,5 @@
 from io import BytesIO
+import time
 
 import picamera
 from PIL import Image
@@ -7,6 +8,8 @@ from rpi_cam.capture.frame_manager import FrameManager
 
 
 class PiCameraFrameManager(FrameManager):
+    DELAY_AFTER_STOP = 2
+
     def start(self):
         super().start()
         self.cap = picamera.PiCamera()
@@ -41,3 +44,4 @@ class PiCameraFrameManager(FrameManager):
         self.cap.stop_preview()
         self.cap = None
         self.image_resolution = None
+        time.sleep(self.DELAY_AFTER_STOP)
