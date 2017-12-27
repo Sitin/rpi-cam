@@ -3,7 +3,7 @@ import os
 from aiohttp import web
 import socketio
 
-from rpi_cam.tools import get_logger, PROJECT_DIR
+from rpi_cam.tools import get_logger, CLIENT_BUILD_DIR
 from rpi_cam.capture import get_frame_manager, Drivers
 
 
@@ -20,6 +20,12 @@ def get_img_src(filename):
 
 def get_thumb_src(filename):
     return '/cam_data/thumbs/%s' % filename
+
+
+async def index(request):
+    """Serve the client-side application."""
+    with open(os.path.join(CLIENT_BUILD_DIR, 'index.html')) as f:
+        return web.Response(text=f.read(), content_type='text/html')
 
 
 @sio.on('connect', namespace='/cam')
@@ -84,12 +90,14 @@ def run(driver=Drivers.RPI, **kwargs):
     app['frame_manager'] = get_frame_manager(driver)
 
     app.router.add_static('/cam_data', app['frame_manager'].path, show_index=True)
-    app.router.add_static('/', os.path.join(PROJECT_DIR, 'client', 'rpi-cam-web', 'build'))
+    app.router.add_get('/', index)
+    app.router.add_static('/', CLIENT_BUILD_DIR)
 
     sio.start_background_task(stream_thumbs)
     web.run_app(app, **kwargs)
 
-    app['frame_manager'].stop()
+    if app['frame_manager'].is_started:
+        app['frame_manager'].stop()
 
 
 if __name__ == '__main__':

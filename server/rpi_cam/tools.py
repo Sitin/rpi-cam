@@ -5,6 +5,7 @@ import os
 APP_DIR = os.path.dirname(os.path.realpath(__file__))
 SERVER_DIR = os.path.dirname(APP_DIR)
 PROJECT_DIR = os.path.dirname(SERVER_DIR)
+CLIENT_BUILD_DIR = os.path.join(PROJECT_DIR, 'client', 'rpi-cam-web', 'build')
 
 
 def get_logger(name, level=logging.INFO):
