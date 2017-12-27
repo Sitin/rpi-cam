@@ -13,8 +13,8 @@ fi
 
 pip install -r ${DIR}/../server/requirements.txt
 
-if [ `uname -m` = 'armv6l' ]; then
-    pip install -r ${CAPTURE_DIR}/rpi_capture/requirements.txt
-else
+if [ ${RPI_CAM_DEV_MODE} = 'True' ]; then
     pip install -r ${CAPTURE_DIR}/opencv_capture/requirements.txt
+else
+    pip install -r ${CAPTURE_DIR}/rpi_capture/requirements.txt
 fi
