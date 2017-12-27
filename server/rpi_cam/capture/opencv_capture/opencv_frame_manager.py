@@ -1,0 +1,37 @@
+import cv2
+
+from rpi_cam.capture.frame_manager import FrameManager
+from rpi_cam.capture.tools import crop_to_ratio
+
+
+class OpenCVFrameManager(FrameManager):
+    def start(self):
+        super().start()
+        self.cap = cv2.VideoCapture(0)
+        self.image_resolution = (self.cap.get(3), self.cap.get(4))
+
+    def get_frame(self):
+        ret, frame = self.cap.read()
+        if ret:
+            return frame
+        else:
+            return None
+
+    def get_thumb(self):
+        frame = self.get_frame()
+        cropped = crop_to_ratio(frame, self.thumb_resolution[0] / self.thumb_resolution[1])
+        if frame is not None:
+            thumb = cv2.resize(cropped, self.thumb_resolution, interpolation=cv2.INTER_CUBIC)
+            return thumb
+        else:
+            return None
+
+    def write_img(self, filename, img):
+        cv2.imwrite(filename, img)
+
+    def stop(self):
+        super().stop()
+        self.cap.release()
+        self.cap = None
+        self.image_resolution = None
+        cv2.destroyAllWindows()
