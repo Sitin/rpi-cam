@@ -10,6 +10,7 @@ else
     echo 'Already on virtual environment. Skipping virtual environment creation.'
 fi
 
+source ${HOME}/.profile
 workon rpi_cam
 
 echo "Install general requirements"
