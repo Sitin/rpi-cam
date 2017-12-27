@@ -4,7 +4,7 @@ from aiohttp import web
 import socketio
 
 from rpi_cam.tools import get_logger, PROJECT_DIR
-from rpi_cam.capture import get_frame_manager, Drivers, FrameManager
+from rpi_cam.capture import get_frame_manager, Drivers
 
 
 logger = get_logger('rpi_cam.server')
@@ -37,7 +37,7 @@ def connect(sid, environ):
 
 @sio.on('shoot', namespace='/cam')
 async def message(sid):
-    manager: FrameManager = app['frame_manager']
+    manager = app['frame_manager']
     filename = manager.shoot()
 
     await sio.emit('image', {
@@ -60,7 +60,7 @@ def disconnect(sid):
 async def stream_thumbs():
     """Send new image notification to client."""
     app['frame_count'] = 0
-    manager: FrameManager = app['frame_manager']
+    manager = app['frame_manager']
 
     while True:
         await sio.sleep(1 / app['frame_rate'])

@@ -6,7 +6,7 @@ class Drivers(object):
     RPI = 'rpi'
 
 
-def get_frame_manager(name: str, *args, **kwargs) -> FrameManager:
+def get_frame_manager(name: str, *args, **kwargs):
     if name == Drivers.OPENCV:
         from rpi_cam.capture.opencv_capture.opencv_frame_manager import OpenCVFrameManager
         return OpenCVFrameManager(*args, **kwargs)

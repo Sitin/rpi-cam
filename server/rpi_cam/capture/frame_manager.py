@@ -40,7 +40,7 @@ class FrameManager(object):
             pass
         os.makedirs(self.thumbs_path, exist_ok=True)
 
-    def get_filename(self) -> str:
+    def get_filename(self):
         return os.path.join(self.path, '{name}.{extension}'.format(
             name='{datetime}-{uuid}'.format(
                 datetime=datetime.datetime.now().isoformat(),
@@ -49,7 +49,7 @@ class FrameManager(object):
             extension=self.extension
         ))
 
-    def get_thumb_filename(self) -> str:
+    def get_thumb_filename(self):
         return os.path.join(self.thumbs_path, '{name}.{extension}'.format(
             name=str(uuid.uuid4()),
             extension=self.extension
