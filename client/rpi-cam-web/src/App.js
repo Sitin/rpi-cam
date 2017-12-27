@@ -16,6 +16,8 @@ class App extends Component {
           <img src={this.state.last_thumb.src} alt="Opening camera..."
                width={this.state.thumb_width}
                height={this.state.thumb_width / this.state.last_thumb.ratio}
+               onClick={shootImage}
+               title="Click to shoot"
           />
         </div>
         <div>
