@@ -1,4 +1,5 @@
 aiohttp==2.3.6
 manage.py==0.2.10
+numpy==1.13.3
 python-engineio==2.0.1
 python-socketio==1.8.4
