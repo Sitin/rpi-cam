@@ -14,12 +14,19 @@ app = web.Application()
 sio.attach(app)
 
 
-def get_img_src(filename):
-    return '/cam_data/%s' % filename
+def set_img_path(img):
+    img.set_path('/cam_data')
+    return img
 
 
-def get_thumb_src(filename):
-    return '/cam_data/thumbs/%s' % filename
+def set_thumb_path(thumb):
+    thumb.set_path('/cam_data/thumbs')
+    return thumb
+
+
+async def close_all_connections():
+    for sock in sio.eio.sockets.values():
+        await sock.close()
 
 
 async def index(request):
@@ -44,12 +51,11 @@ def connect(sid, environ):
 @sio.on('shoot', namespace='/cam')
 async def message(sid):
     manager = app['frame_manager']
-    filename = manager.shoot()
+    img = manager.shoot()
+    set_img_path(img)
 
-    await sio.emit('image', {
-        'src': get_img_src(filename),
-        'ratio': manager.image_resolution[0] / manager.image_resolution[1],
-    }, room=sid, namespace='/cam')
+    logger.debug('Sending image update for {filename} thumb'.format(filename=img.filename))
+    await sio.emit('image', img.__dict__, room=sid, namespace='/cam')
 
 
 @sio.on('disconnect', namespace='/cam')
@@ -73,14 +79,11 @@ async def stream_thumbs():
 
         if manager.is_started:
             app['frame_count'] += 1
-            thumb_filename = manager.make_thumb()
-            thumb_src = get_thumb_src(thumb_filename)
+            thumb = manager.make_thumb()
+            set_thumb_path(thumb)
 
-            logger.debug('Sending frame update for {thumb_name} thumb'.format(thumb_name=thumb_filename))
-            await sio.emit('thumb', {
-                'src': thumb_src,
-                'ratio': manager.thumb_resolution[0] / manager.thumb_resolution[1],
-            }, namespace='/cam')
+            logger.debug('Sending frame update for {filename} thumb'.format(filename=thumb.filename))
+            await sio.emit('thumb', thumb.__dict__, namespace='/cam')
 
 
 def run(driver=Drivers.RPI, **kwargs):

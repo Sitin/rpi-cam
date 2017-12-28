@@ -14,6 +14,37 @@ DEFAULT_THUMB_RESOLUTION = (320, 240)
 logger = get_logger('rpi_cam.capture.frame_manager')
 
 
+class ImageData:
+    def __init__(self, filename, resolution, thumbnail=None):
+        self.filename = filename
+        self.resolution = resolution
+        self.ratio = resolution[0] / resolution[1]
+        self.thumbnail = thumbnail
+        self.path = ''
+
+    def set_path(self, path):
+        self.path = path
+        if self.thumbnail is not None:
+            self.thumbnail.set_path(path)
+
+    @property
+    def src(self):
+        return '{path}/{filename}'.format(path=self.path, filename=self.filename)
+
+    @property
+    def __dict__(self):
+        data = {
+            'src': self.src,
+            'resolution': self.resolution,
+            'ratio': self.ratio,
+        }
+
+        if self.thumbnail is not None:
+            data['thumbnail'] = self.thumbnail.__dict__
+
+        return data
+
+
 class FrameManager(object):
     def __init__(self, path=DEFAULT_PATH, thumb_resolution=DEFAULT_THUMB_RESOLUTION):
         self.path = path
@@ -58,7 +89,7 @@ class FrameManager(object):
     def make_thumb(self):
         filename = self.get_thumb_filename()
         self._make_thumb(filename)
-        return os.path.basename(filename)
+        return ImageData(os.path.basename(filename), self.thumb_resolution)
 
     def _make_thumb(self, filename):
         thumb = self.get_thumb()
@@ -69,7 +100,7 @@ class FrameManager(object):
     def shoot(self):
         filename = self.get_filename()
         self._shoot(filename)
-        return os.path.basename(filename)
+        return ImageData(os.path.basename(filename), self.image_resolution)
 
     def _shoot(self, filename):
         img = self.get_frame()

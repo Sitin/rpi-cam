@@ -1,5 +1,4 @@
 from io import BytesIO
-import time
 
 import picamera
 from PIL import Image
