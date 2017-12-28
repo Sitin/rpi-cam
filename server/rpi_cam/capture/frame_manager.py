@@ -22,7 +22,7 @@ class FrameManager(object):
         self.image_resolution = None
         self.extension = 'jpg'
         self.format = 'jpeg'
-        self.cap = None
+        self.camera = None
         self.is_started = False
 
         os.makedirs(self.path, exist_ok=True)

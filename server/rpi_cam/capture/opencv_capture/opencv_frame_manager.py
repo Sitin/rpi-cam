@@ -7,11 +7,11 @@ from rpi_cam.capture.tools import crop_to_ratio
 class OpenCVFrameManager(FrameManager):
     def start(self):
         super().start()
-        self.cap = cv2.VideoCapture(0)
-        self.image_resolution = (self.cap.get(3), self.cap.get(4))
+        self.camera = cv2.VideoCapture(0)
+        self.image_resolution = (self.camera.get(3), self.camera.get(4))
 
     def get_frame(self):
-        ret, frame = self.cap.read()
+        ret, frame = self.camera.read()
         if ret:
             return frame
         else:
@@ -31,7 +31,7 @@ class OpenCVFrameManager(FrameManager):
 
     def stop(self):
         super().stop()
-        self.cap.release()
-        self.cap = None
+        self.camera.release()
+        self.camera = None
         self.image_resolution = None
         cv2.destroyAllWindows()
