@@ -91,11 +91,17 @@ class FrameManager(object):
         if self._previews < self.max_previews_count:
             return
 
+        logger.info('Truncating previews to maximum count of {count}...'.format(
+            count=self.max_previews_count
+        ))
+
         previews = glob.glob(os.path.join(self.preview_path, '*.%s' % self.extension))
-        oldest = sorted(previews, key=os.path.getctime)[:-self.max_previews_count]
+        oldest = sorted(previews, key=os.path.getctime)[:-self.max_previews_count // 2]
 
         for filename in oldest:
             os.remove(filename)
+
+        self._previews = self.max_previews_count // 2
 
     def get_image_filename(self):
         return os.path.join(self.path, '{name}.{extension}'.format(
@@ -143,11 +149,13 @@ class FrameManager(object):
         self._shoot(filename)
         thumb_filename, thumbnail_resolution = self.make_thumbnail(filename)
 
-        return ImageData(os.path.basename(filename),
-                         self.image_resolution,
-                         url_prefix=self.url_prefix,
-                         thumbnail=ImageData(os.path.basename(thumb_filename),
-                                             thumbnail_resolution))
+        image_data = ImageData(os.path.basename(filename),
+                               self.image_resolution,
+                               url_prefix=self.url_prefix,
+                               thumbnail=ImageData(os.path.basename(thumb_filename),
+                                                   thumbnail_resolution))
+        logger.warning('Image "{filename}" saved.'.format(filename=image_data.filename))
+        return image_data
 
     def _shoot(self, filename):
         img = self.get_image()

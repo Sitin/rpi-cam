@@ -20,12 +20,6 @@ async def close_all_connections():
         await sock.close()
 
 
-async def index(request):
-    """Serve the client-side application."""
-    with open(os.path.join(CLIENT_BUILD_DIR, 'index.html')) as f:
-        return web.Response(text=f.read(), content_type='text/html')
-
-
 @sio.on('connect', namespace='/cam')
 def connect(sid, environ):
     logger.warning('Connection established: {sid} from {origin}.'.format(
@@ -82,7 +76,6 @@ def run(driver=Drivers.RPI, frame_rate=24, **kwargs):
     app['frame_manager'] = get_frame_manager(driver, url_prefix='/cam_data')
 
     app.router.add_static('/cam_data', app['frame_manager'].path, show_index=True)
-    # app.router.add_get('/', index)
     app.router.add_static('/', CLIENT_BUILD_DIR)
 
     sio.start_background_task(stream_thumbs)
