@@ -13,6 +13,7 @@ DEFAULT_PATH = os.path.join(SERVER_DIR, 'cam_data')
 DEFAULT_PREVIEW_RESOLUTION = (320, 240)
 DEFAULT_THUMBNAIL_BOUNDS = (320, 240)
 DEFAULT_MAX_PREVIEWS_COUNT = 24 * 5
+DEFAULT_LATEST_IMAGES_COUNT = 6
 
 logger = get_logger('rpi_cam.capture.frame_manager')
 
@@ -82,7 +83,7 @@ class FrameManager(object):
         previews = glob.glob(os.path.join(self.preview_path, '*.%s' % self.extension))
         return sorted(previews, key=os.path.getctime)[count:]
 
-    def get_latest_images(self, count=5):
+    def get_latest_images(self, count=DEFAULT_LATEST_IMAGES_COUNT):
         images = glob.glob(os.path.join(self.path, '*.%s' % self.extension))
         images = [img for img in images if not os.path.basename(img).startswith(self.THUMB_PREFIX)]
         latest_images = sorted(images, key=os.path.getctime, reverse=True)[:count]

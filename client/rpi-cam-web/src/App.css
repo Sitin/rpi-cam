@@ -2,14 +2,9 @@
   text-align: center;
 }
 
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 80px;
-}
-
 .App-header {
   background-color: #222;
-  height: 150px;
+  height: 50px;
   padding: 20px;
   color: white;
 }
@@ -18,18 +13,34 @@
   font-size: 1.5em;
 }
 
-.App-intro {
-  font-size: large;
+.App-content {
+  margin-top: .5em;
+  margin-bottom: .5em;
 }
 
 .App-shoot-btn {
-  width: 30%;
+  width: 90%;
   font-size: large;
   padding: .5em;
   margin: .5em;
 }
 
-@keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.App-gallery {
+  width: 100%;
+}
+
+.App-footer {
+  background-color: #222;
+  height: 50px;
+  padding: 20px;
+  color: white;
+  font-size: small;
+}
+
+.App-footer a:link, .App-footer a:visited {
+  color: azure;
+}
+
+.App-footer a:hover {
+  color: gray;
 }

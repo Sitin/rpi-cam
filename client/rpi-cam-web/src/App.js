@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
+import nothing from './nothing.png';
 import './App.css';
 
 import { subscribeToPreviews, subscribeToImages, subscribeToLatestImages, shootImage } from './api';
@@ -9,24 +9,24 @@ class App extends Component {
     return (
       <div className="App">
         <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
           <h1 className="App-title">RPI Camera</h1>
         </header>
-        <div>
-          <img src={this.state.last_preview.src} alt="Opening camera..."
-               width={this.state.preview_width}
-               height={this.state.preview_width / this.state.last_preview.ratio}
-               onClick={shootImage}
-               title="Click to shoot"
-          />
+        <div className="App-content">
+          <div>
+            {this.imageJSX(this.state.last_preview, this.state.preview_width, true)}
+          </div>
+          <div>
+            <button className="App-shoot-btn" onClick={shootImage}>Shoot</button>
+          </div>
+          {this.lastShotJSX()}
+          <div className="App-gallery">
+            {this.latestImagesJSX()}
+          </div>
         </div>
-        <div>
-          <button className="App-shoot-btn" onClick={shootImage}>Shoot</button>
-        </div>
-        {this.lastShotJSX()}
-        <div>
-          {this.latestImagesJSX()}
-        </div>
+        <footer className="App-footer">
+          <p>Created by <a href="https://github.com/Sitin">Mikhail Zyatin</a>.</p>
+          <p><a href="https://github.com/Sitin/rpi-cam">Source code</a></p>
+        </footer>
       </div>
     );
   }
@@ -61,11 +61,12 @@ class App extends Component {
       </div> : undefined
   );
 
-  latestImagesJSX = () => this.state.latest_images.map(img =>
-    this.imageJSX(img, this.state.gallery_image_width, false));
+  latestImagesJSX = () => this.state.latest_images.map(img => (
+    <span key={img.src}>{this.imageJSX(img, this.state.gallery_image_width, false)}</span>
+  ));
 
   state = {
-    last_preview: {src: '/static/media/nothing.jpg', ratio: 4/3},
+    last_preview: {src: nothing, ratio: 4/3},
     last_image: null,
     latest_images: [],
     preview_width: 320,
