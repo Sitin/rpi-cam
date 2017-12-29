@@ -12,23 +12,18 @@ function getFullSrc(src) {
   }
 }
 
-function subscribeToThumbs(cb) {
-  socket.on('thumb', data => {
-    const src = data['src'] || '/static/media/nothing.jpg';
-    return cb(null, {
-      src: getFullSrc(src),
-      ratio: data['ratio'] || 4/3,
-    });
+function subscribeToPreviews(cb) {
+  socket.on('preview', data => {
+    data.src = getFullSrc(data.src);
+    return cb(null, data);
   });
 }
 
 function subscribeToImages(cb) {
   socket.on('image', data => {
-    const src = data['src'] || '/static/media/nothing.jpg';
-    return cb(null, {
-      src: getFullSrc(src),
-      ratio: data['ratio'] || 4/3,
-    });
+    data.src = getFullSrc(data.src);
+    data.thumbnail.src = getFullSrc(data.thumbnail.src);
+    return cb(null, data);
   });
 }
 
@@ -36,4 +31,4 @@ function shootImage() {
   socket.emit('shoot');
 }
 
-export { subscribeToThumbs, subscribeToImages, shootImage }
+export { subscribeToPreviews, subscribeToImages, shootImage }

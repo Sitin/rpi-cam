@@ -7,9 +7,10 @@ manager = Manager()
 
 
 @manager.command
-def runserver(port=8080, path='/tmp/rpi_cam.sock', host=None, driver=Drivers.RPI):
+def runserver(port=8080, frame_rate=24, path='/tmp/rpi_cam.sock', host=None, driver=Drivers.RPI):
     """Runs server at <port> (default is 8080)"""
-    return rpi_cam.server.run(port=int(port), path=path, host=host, driver=driver)
+    return rpi_cam.server.run(port=int(port), frame_rate=frame_rate,
+                              path=path, host=host, driver=driver)
 
 
 if __name__ == '__main__':

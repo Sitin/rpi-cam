@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
 
-import { subscribeToThumbs, subscribeToImages, shootImage } from './api';
+import { subscribeToPreviews, subscribeToImages, shootImage } from './api';
 
 class App extends Component {
   render() {
@@ -13,9 +13,9 @@ class App extends Component {
           <h1 className="App-title">RPI Camera</h1>
         </header>
         <div>
-          <img src={this.state.last_thumb.src} alt="Opening camera..."
-               width={this.state.thumb_width}
-               height={this.state.thumb_width / this.state.last_thumb.ratio}
+          <img src={this.state.last_preview.src} alt="Opening camera..."
+               width={this.state.preview_width}
+               height={this.state.preview_width / this.state.last_preview.ratio}
                onClick={shootImage}
                title="Click to shoot"
           />
@@ -25,10 +25,12 @@ class App extends Component {
         </div>
         <p className="App-intro">Last shot:</p>
         <div>
-          <img src={this.state.last_image.src} alt="Nothing to show."
-               width={this.state.image_width}
-               height={this.state.image_width / this.state.last_image.ratio}
-          />
+          <a href={this.state.last_image.src} title="Click to open full image">
+            <img src={this.state.last_image.thumbnail.src} alt="Nothing to show."
+                 width={this.state.image_width}
+                 height={this.state.image_width / this.state.last_image.ratio}
+            />
+          </a>
         </div>
       </div>
     );
@@ -36,8 +38,8 @@ class App extends Component {
 
   constructor(props) {
     super(props);
-    subscribeToThumbs((err, last_frame) => this.setState({
-      last_thumb: last_frame
+    subscribeToPreviews((err, last_frame) => this.setState({
+      last_preview: last_frame
     }));
     subscribeToImages((err, last_image) => this.setState({
       last_image: last_image
@@ -45,10 +47,12 @@ class App extends Component {
   }
 
   state = {
-    last_thumb: {src: '/static/media/nothing.jpg', ratio: 4/3},
-    last_image: {src: '/static/media/nothing.jpg', ratio: 4/3},
-    thumb_width: 320,
-    image_width: 600,
+    last_preview: {src: '/static/media/nothing.jpg', ratio: 4/3},
+    last_image: {src: '/static/media/nothing.jpg', ratio: 4/3, thumbnail: {
+      src: '/static/media/nothing.jpg', ratio: 4/3
+    }},
+    preview_width: 320,
+    image_width: 320,
   };
 }
 

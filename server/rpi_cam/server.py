@@ -1,6 +1,7 @@
 import os
 
 from aiohttp import web
+from aiohttp_index import IndexMiddleware
 import socketio
 
 from rpi_cam.tools import get_logger, CLIENT_BUILD_DIR
@@ -10,18 +11,8 @@ from rpi_cam.capture import get_frame_manager, Drivers
 logger = get_logger('rpi_cam.server')
 
 sio = socketio.AsyncServer()
-app = web.Application()
+app = web.Application(middlewares=[IndexMiddleware()])
 sio.attach(app)
-
-
-def set_img_path(img):
-    img.set_path('/cam_data')
-    return img
-
-
-def set_thumb_path(thumb):
-    thumb.set_path('/cam_data/thumbs')
-    return thumb
 
 
 async def close_all_connections():
@@ -52,7 +43,6 @@ def connect(sid, environ):
 async def message(sid):
     manager = app['frame_manager']
     img = manager.shoot()
-    set_img_path(img)
 
     logger.debug('Sending image update for {filename} thumb'.format(filename=img.filename))
     await sio.emit('image', img.__dict__, room=sid, namespace='/cam')
@@ -79,21 +69,20 @@ async def stream_thumbs():
 
         if manager.is_started:
             app['frame_count'] += 1
-            thumb = manager.make_thumb()
-            set_thumb_path(thumb)
+            preview = manager.preview()
 
-            logger.debug('Sending frame update for {filename} thumb'.format(filename=thumb.filename))
-            await sio.emit('thumb', thumb.__dict__, namespace='/cam')
+            logger.debug('Sending frame update for {filename} preview'.format(filename=preview.filename))
+            await sio.emit('preview', preview.__dict__, namespace='/cam')
 
 
-def run(driver=Drivers.RPI, **kwargs):
-    app['frame_rate'] = 6
+def run(driver=Drivers.RPI, frame_rate=24, **kwargs):
+    app['frame_rate'] = frame_rate
     app['client'] = 0
 
-    app['frame_manager'] = get_frame_manager(driver)
+    app['frame_manager'] = get_frame_manager(driver, url_prefix='/cam_data')
 
     app.router.add_static('/cam_data', app['frame_manager'].path, show_index=True)
-    app.router.add_get('/', index)
+    # app.router.add_get('/', index)
     app.router.add_static('/', CLIENT_BUILD_DIR)
 
     sio.start_background_task(stream_thumbs)

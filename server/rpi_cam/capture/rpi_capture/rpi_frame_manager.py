@@ -14,7 +14,7 @@ class PiCameraFrameManager(FrameManager):
         self.camera = picamera.PiCamera()
         self.camera.start_preview()
 
-    def get_frame(self):
+    def get_image(self):
         stream = BytesIO()
         self.camera.capture(stream, format=self.format)
         stream.seek(0)
@@ -22,14 +22,14 @@ class PiCameraFrameManager(FrameManager):
         self.image_resolution = image.size
         return image
 
-    def get_thumb(self):
+    def get_preview(self):
         stream = BytesIO()
-        self.camera.capture(stream, format=self.format, resize=self.thumb_resolution)
+        self.camera.capture(stream, format=self.format, resize=self.preview_resolution)
         stream.seek(0)
         return Image.open(stream)
 
-    def _make_thumb(self, filename):
-        self.camera.capture(filename, resize=self.thumb_resolution)
+    def _preview(self, filename):
+        self.camera.capture(filename, resize=self.preview_resolution)
 
     def _shoot(self, filename):
         self.camera.capture(filename)

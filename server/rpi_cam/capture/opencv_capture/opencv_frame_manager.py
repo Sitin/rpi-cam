@@ -10,18 +10,18 @@ class OpenCVFrameManager(FrameManager):
         self.camera = cv2.VideoCapture(0)
         self.image_resolution = (self.camera.get(3), self.camera.get(4))
 
-    def get_frame(self):
+    def get_image(self):
         ret, frame = self.camera.read()
         if ret:
             return frame
         else:
             return None
 
-    def get_thumb(self):
-        frame = self.get_frame()
-        cropped = crop_to_ratio(frame, self.thumb_resolution[0] / self.thumb_resolution[1])
+    def get_preview(self):
+        frame = self.get_image()
+        cropped = crop_to_ratio(frame, self.preview_resolution[0] / self.preview_resolution[1])
         if frame is not None:
-            thumb = cv2.resize(cropped, self.thumb_resolution, interpolation=cv2.INTER_CUBIC)
+            thumb = cv2.resize(cropped, self.preview_resolution, interpolation=cv2.INTER_CUBIC)
             return thumb
         else:
             return None
