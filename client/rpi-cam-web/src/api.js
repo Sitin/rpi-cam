@@ -27,8 +27,18 @@ function subscribeToImages(cb) {
   });
 }
 
+function subscribeToLatestImages(cb) {
+  socket.on('latest images', data => {
+    for (let img of data) {
+      img.src = getFullSrc(img.src);
+      img.thumbnail.src = getFullSrc(img.thumbnail.src);
+    }
+    return cb(null, data);
+  });
+}
+
 function shootImage() {
   socket.emit('shoot');
 }
 
-export { subscribeToPreviews, subscribeToImages, shootImage }
+export { subscribeToPreviews, subscribeToImages, subscribeToLatestImages, shootImage }

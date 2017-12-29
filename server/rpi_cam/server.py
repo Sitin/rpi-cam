@@ -21,7 +21,7 @@ async def close_all_connections():
 
 
 @sio.on('connect', namespace='/cam')
-def connect(sid, environ):
+async def connect(sid, environ):
     logger.warning('Connection established: {sid} from {origin}.'.format(
         sid=sid, origin=environ.get('HTTP_ORIGIN', 'unknown origin')
     ))
@@ -32,14 +32,23 @@ def connect(sid, environ):
 
     app['client'] += 1
 
+    logger.info('Initialising user with latest images.')
+    await sio.emit('latest images',
+                   [img.__dict__ for img in app['frame_manager'].get_latest_images()],
+                   namespace='/cam')
+
 
 @sio.on('shoot', namespace='/cam')
 async def message(sid):
-    manager = app['frame_manager']
-    img = manager.shoot()
+    img = app['frame_manager'].shoot()
 
     logger.debug('Sending image update for {filename} thumb'.format(filename=img.filename))
     await sio.emit('image', img.__dict__, room=sid, namespace='/cam')
+
+    logger.debug('Sending latest images update.')
+    await sio.emit('latest images',
+                   [img.__dict__ for img in app['frame_manager'].get_latest_images()],
+                   namespace='/cam')
 
 
 @sio.on('disconnect', namespace='/cam')

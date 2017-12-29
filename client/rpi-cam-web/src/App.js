@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
 
-import { subscribeToPreviews, subscribeToImages, shootImage } from './api';
+import { subscribeToPreviews, subscribeToImages, subscribeToLatestImages, shootImage } from './api';
 
 class App extends Component {
   render() {
@@ -21,16 +21,11 @@ class App extends Component {
           />
         </div>
         <div>
-          <button onClick={shootImage}>Shoot</button>
+          <button className="App-shoot-btn" onClick={shootImage}>Shoot</button>
         </div>
-        <p className="App-intro">Last shot:</p>
+        {this.lastShotJSX()}
         <div>
-          <a href={this.state.last_image.src} title="Click to open full image">
-            <img src={this.state.last_image.thumbnail.src} alt="Nothing to show."
-                 width={this.state.image_width}
-                 height={this.state.image_width / this.state.last_image.ratio}
-            />
-          </a>
+          {this.latestImagesJSX()}
         </div>
       </div>
     );
@@ -44,15 +39,38 @@ class App extends Component {
     subscribeToImages((err, last_image) => this.setState({
       last_image: last_image
     }));
+    subscribeToLatestImages((err, latest_images) => this.setState({
+      latest_images: latest_images
+    }));
   }
+
+  imageJSX = (img, width, fullSize) => (
+    img ?
+    <a href={img.src} title="Click to open full image">
+      <img src={fullSize ? img.src : img.thumbnail.src} alt="Nothing to show."
+           width={width}
+           height={width / img.ratio}
+      />
+    </a> : undefined
+  );
+
+  lastShotJSX = () => (
+    this.state.last_image ?
+      <div>
+        {this.imageJSX(this.state.last_image, this.state.image_width, true)}
+      </div> : undefined
+  );
+
+  latestImagesJSX = () => this.state.latest_images.map(img =>
+    this.imageJSX(img, this.state.gallery_image_width, false));
 
   state = {
     last_preview: {src: '/static/media/nothing.jpg', ratio: 4/3},
-    last_image: {src: '/static/media/nothing.jpg', ratio: 4/3, thumbnail: {
-      src: '/static/media/nothing.jpg', ratio: 4/3
-    }},
+    last_image: null,
+    latest_images: [],
     preview_width: 320,
     image_width: 320,
+    gallery_image_width: 160,
   };
 }
 

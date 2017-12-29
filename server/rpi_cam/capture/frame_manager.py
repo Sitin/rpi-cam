@@ -50,6 +50,8 @@ class ImageData:
 
 
 class FrameManager(object):
+    THUMB_PREFIX = '__thumb__'
+    
     def __init__(self, path=DEFAULT_PATH,
                  preview_resolution=DEFAULT_PREVIEW_RESOLUTION,
                  thumbnail_bounds=DEFAULT_THUMBNAIL_BOUNDS,
@@ -79,6 +81,12 @@ class FrameManager(object):
     def get_latest_previews(self, count):
         previews = glob.glob(os.path.join(self.preview_path, '*.%s' % self.extension))
         return sorted(previews, key=os.path.getctime)[count:]
+
+    def get_latest_images(self, count=5):
+        images = glob.glob(os.path.join(self.path, '*.%s' % self.extension))
+        images = [img for img in images if not os.path.basename(img).startswith(self.THUMB_PREFIX)]
+        latest_images = sorted(images, key=os.path.getctime, reverse=True)[:count]
+        return [self.get_image_data(img) for img in latest_images]
 
     def reset_previews(self):
         try:
@@ -112,11 +120,19 @@ class FrameManager(object):
             extension=self.extension
         ))
 
-    @staticmethod
-    def get_thumbnail_filename(filename):
-        """Prepends file's basename with __thumb__"""
+    def get_thumbnail_filename(self, filename):
+        """Prepends file's basename with `self.THUMB_PREFIX` (__thumb__ by default)"""
         return os.path.join(os.path.dirname(filename),
-                            '__thumb__' + os.path.basename(filename))
+                            self.THUMB_PREFIX + os.path.basename(filename))
+
+    def get_image_data(self, filename, thumbnail_data=None):
+        if thumbnail_data is None:
+            thumbnail_data = self.get_img_thumbnail_data(filename)
+
+        return ImageData(os.path.basename(filename),
+                         self.image_resolution,
+                         url_prefix=self.url_prefix,
+                         thumbnail=thumbnail_data)
 
     def get_preview_filename(self):
         return os.path.join(self.preview_path, '{name}.{extension}'.format(
@@ -142,18 +158,27 @@ class FrameManager(object):
         img = Image.open(filename)
         img.thumbnail(self.thumbnail_bounds, Image.ANTIALIAS)
         img.save(thumb_filename)
-        return thumb_filename, img.size
+        return ImageData(os.path.basename(thumb_filename), img.size)
+
+    def get_img_thumbnail_data(self, filename):
+        thumb_filename = self.get_thumbnail_filename(filename)
+        try:
+            thumbnail = Image.open(thumb_filename)
+            return ImageData(os.path.basename(thumb_filename),
+                             thumbnail.size,
+                             url_prefix=self.url_prefix)
+        except FileNotFoundError:
+            logger.warning('Creating missing thumbnail for image {filename}.'.format(
+                filename=os.path.basename(filename)
+            ))
+            return self.make_thumbnail(filename)
 
     def shoot(self):
         filename = self.get_image_filename()
         self._shoot(filename)
-        thumb_filename, thumbnail_resolution = self.make_thumbnail(filename)
+        thumbnail_data = self.make_thumbnail(filename)
 
-        image_data = ImageData(os.path.basename(filename),
-                               self.image_resolution,
-                               url_prefix=self.url_prefix,
-                               thumbnail=ImageData(os.path.basename(thumb_filename),
-                                                   thumbnail_resolution))
+        image_data = self.get_image_data(filename, thumbnail_data)
         logger.warning('Image "{filename}" saved.'.format(filename=image_data.filename))
         return image_data
 
