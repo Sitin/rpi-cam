@@ -18,6 +18,20 @@ async def close_all_connections():
         await sock.close()
 
 
+async def send_camera_settings(sid=None):
+    camera_setings = {
+        'frame_rate': app['frame_rate'],
+        'auto_shoot': app['auto_shoot'],
+        'shoot_timeout': app['shoot_timeout'],
+    }
+
+    logger.info('Update user(s) with camera settings.')
+    await sio.emit('settings',
+                   camera_setings,
+                   sid=sid,
+                   namespace='/cam')
+
+
 @sio.on('connect', namespace='/cam')
 async def connect(sid, environ):
     logger.warning('Connection established: {sid} from {origin}.'.format(
@@ -30,9 +44,12 @@ async def connect(sid, environ):
 
     app['client'] += 1
 
+    await send_camera_settings(sid)
+
     logger.info('Initialising user with latest images.')
     await sio.emit('latest images',
                    [img.__dict__ for img in app['frame_manager'].get_latest_images()],
+                   sid=sid,
                    namespace='/cam')
 
 
@@ -78,6 +95,8 @@ async def stream_thumbs():
 
 def run(driver=Drivers.RPI, frame_rate=24, **kwargs):
     app['frame_rate'] = frame_rate
+    app['auto_shoot'] = False
+    app['shoot_timeout'] = 5
     app['client'] = 0
 
     app['frame_manager'] = get_frame_manager(driver, url_prefix='/cam_data')
