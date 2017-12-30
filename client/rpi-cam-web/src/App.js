@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
-import nothing from './nothing.png';
 import './App.css';
 
-import { subscribeToPreviews, subscribeToImages, subscribeToLatestImages, shootImage } from './api';
+import { Camera } from './camera/Camera';
+import { LastShot } from './camera/LastShot';
+import { LatestShots } from './camera/LatestShots';
 
 class App extends Component {
   render() {
@@ -11,20 +12,13 @@ class App extends Component {
         <header className="App-header">
           <h1 className="App-title">RPI Camera</h1>
         </header>
+
         <div className="App-content">
-          <div>
-            <a title="Click to shoot image" onClick={shootImage}>
-              {this.imageJSX(this.state.last_preview, this.state.preview_width, true)}
-            </a>
-          </div>
-          <div>
-            <button className="App-shoot-btn" onClick={shootImage}>Shoot</button>
-          </div>
-          {this.lastShotJSX()}
-          <div className="App-gallery">
-            {this.latestImagesJSX()}
-          </div>
+          <Camera imageWidth={320} />
+          <LastShot imageWidth={320} />
+          <LatestShots imageWidth={160} />
         </div>
+
         <footer className="App-footer">
           <p>Created by <a href="https://github.com/Sitin">Mikhail Zyatin</a>.</p>
           <p><a href="https://github.com/Sitin/rpi-cam">Source code</a></p>
@@ -32,54 +26,6 @@ class App extends Component {
       </div>
     );
   }
-
-  constructor(props) {
-    super(props);
-    subscribeToPreviews((err, last_frame) => this.setState({
-      last_preview: last_frame
-    }));
-    subscribeToImages((err, last_image) => this.setState({
-      last_image: last_image
-    }));
-    subscribeToLatestImages((err, latest_images) => this.setState({
-      latest_images: latest_images
-    }));
-  }
-
-  imageJSX = (img, width, fullSize) => (
-    img ?
-      <img src={fullSize ? img.src : img.thumbnail.src} alt="Nothing to show."
-           width={width}
-           height={width / img.ratio}
-      /> : undefined
-  );
-
-  openableImageJSX = (img, width, fullSize) => (
-    img ?
-    <a href={img.src} title="Click to open full image">
-      {this.imageJSX(img, width, fullSize)}
-    </a> : undefined
-  );
-
-  lastShotJSX = () => (
-    this.state.last_image ?
-      <div>
-        {this.openableImageJSX(this.state.last_image, this.state.image_width, true)}
-      </div> : undefined
-  );
-
-  latestImagesJSX = () => this.state.latest_images.map(img => (
-    <span key={img.src}>{this.openableImageJSX(img, this.state.gallery_image_width, false)}</span>
-  ));
-
-  state = {
-    last_preview: {src: nothing, ratio: 4/3},
-    last_image: null,
-    latest_images: [],
-    preview_width: 320,
-    image_width: 320,
-    gallery_image_width: 160,
-  };
 }
 
 export default App;

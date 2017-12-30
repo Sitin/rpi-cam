@@ -18,17 +18,6 @@
   margin-bottom: .5em;
 }
 
-.App-shoot-btn {
-  width: 90%;
-  font-size: large;
-  padding: .5em;
-  margin: .5em;
-}
-
-.App-gallery {
-  width: 100%;
-}
-
 .App-footer {
   background-color: #222;
   height: 50px;
