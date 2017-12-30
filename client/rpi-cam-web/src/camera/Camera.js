@@ -4,9 +4,11 @@ import { Button, Row } from 'react-bootstrap';
 
 import { Image } from '../shared/Image';
 import { LastShot } from './LastShot';
-import { subscribeToPreviews, shootImage } from './api';
+import { subscribeToPreviews, shootImage, onDisconnect } from './api';
 
 import nothing from './nothing.png';
+
+const imageOfNothing = {src: nothing, ratio: 4/3};
 
 class Camera extends Component {
   constructor(props) {
@@ -15,6 +17,8 @@ class Camera extends Component {
     subscribeToPreviews((err, lastFrame) => this.setState({
       lastFrame: lastFrame
     }));
+
+    onDisconnect((err) => this.setState({ lastFrame: imageOfNothing }));
   }
 
   render() {
@@ -27,7 +31,7 @@ class Camera extends Component {
   }
 
   state = {
-    lastFrame: {src: nothing, ratio: 4/3},
+    lastFrame: imageOfNothing,
   };
 }
 

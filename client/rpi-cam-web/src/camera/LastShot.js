@@ -14,7 +14,7 @@ class LastShot extends Component {
   }
 
   render() {
-    return <Panel collapsible expanded={!!this.state.lastShot} onClick={() => this.state.lastShot=null}>
+    return <Panel collapsible expanded={!!this.state.lastShot} onClick={() => this.setState({lastShot: null})}>
       <Image img={this.state.lastShot} width={this.props.imageWidth} openable={true} />
     </Panel>;
   }

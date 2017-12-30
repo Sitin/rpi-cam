@@ -10,6 +10,10 @@ function getFullSrc(src) {
   }
 }
 
+function onDisconnect(cb) {
+  socket.on('disconnect', cb);
+}
+
 function subscribeToPreviews(cb) {
   socket.on('preview', data => {
     data.src = getFullSrc(data.src);
@@ -39,4 +43,4 @@ function shootImage() {
   socket.emit('shoot');
 }
 
-export { subscribeToPreviews, subscribeToImages, subscribeToLatestImages, shootImage }
+export { subscribeToPreviews, subscribeToImages, subscribeToLatestImages, shootImage, onDisconnect }
