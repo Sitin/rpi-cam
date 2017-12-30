@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import { subscribeToImages } from './api';
 import { Image } from '../shared/Image';
 
+import { Panel } from 'react-bootstrap';
+
 class LastShot extends Component {
   constructor(props) {
     super(props);
@@ -12,9 +14,9 @@ class LastShot extends Component {
   }
 
   render() {
-    return <div>
+    return <Panel collapsible expanded={!!this.state.lastShot} onClick={() => this.state.lastShot=null}>
       <Image img={this.state.lastShot} width={this.props.imageWidth} openable={true} />
-    </div>;
+    </Panel>;
   }
 
   state = {

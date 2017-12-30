@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
-import nothing from './nothing.png';
+
+import { Button, Row } from 'react-bootstrap';
 
 import { Image } from '../shared/Image';
-
+import { LastShot } from './LastShot';
 import { subscribeToPreviews, shootImage } from './api';
 
-import './Camera.css';
+import nothing from './nothing.png';
 
 class Camera extends Component {
   constructor(props) {
@@ -17,16 +18,12 @@ class Camera extends Component {
   }
 
   render() {
-    return <div className="Camera">
-      <div className="Camera-preview">
-        <a title="Click to shoot image" onClick={shootImage}>
-          <Image img={this.state.lastFrame} width={this.props.imageWidth} />
-        </a>
-      </div>
-      <div>
-        <button className="Camera-shoot-btn" onClick={shootImage}>Shoot</button>
-      </div>
-    </div>;
+    return <Row>
+      <Button onClick={shootImage} block>
+        <Image img={this.state.lastFrame} width={this.props.imageWidth} />
+      </Button>
+      <LastShot imageWidth={this.props.imageWidth} />
+    </Row>;
   }
 
   state = {
