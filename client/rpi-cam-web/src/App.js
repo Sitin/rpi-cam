@@ -13,7 +13,9 @@ class App extends Component {
         </header>
         <div className="App-content">
           <div>
-            {this.imageJSX(this.state.last_preview, this.state.preview_width, true)}
+            <a title="Click to shoot image" onClick={shootImage}>
+              {this.imageJSX(this.state.last_preview, this.state.preview_width, true)}
+            </a>
           </div>
           <div>
             <button className="App-shoot-btn" onClick={shootImage}>Shoot</button>
@@ -46,23 +48,28 @@ class App extends Component {
 
   imageJSX = (img, width, fullSize) => (
     img ?
-    <a href={img.src} title="Click to open full image">
       <img src={fullSize ? img.src : img.thumbnail.src} alt="Nothing to show."
            width={width}
            height={width / img.ratio}
-      />
+      /> : undefined
+  );
+
+  openableImageJSX = (img, width, fullSize) => (
+    img ?
+    <a href={img.src} title="Click to open full image">
+      {this.imageJSX(img, width, fullSize)}
     </a> : undefined
   );
 
   lastShotJSX = () => (
     this.state.last_image ?
       <div>
-        {this.imageJSX(this.state.last_image, this.state.image_width, true)}
+        {this.openableImageJSX(this.state.last_image, this.state.image_width, true)}
       </div> : undefined
   );
 
   latestImagesJSX = () => this.state.latest_images.map(img => (
-    <span key={img.src}>{this.imageJSX(img, this.state.gallery_image_width, false)}</span>
+    <span key={img.src}>{this.openableImageJSX(img, this.state.gallery_image_width, false)}</span>
   ));
 
   state = {

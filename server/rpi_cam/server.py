@@ -1,5 +1,3 @@
-import os
-
 from aiohttp import web
 from aiohttp_index import IndexMiddleware
 import socketio
@@ -87,7 +85,9 @@ def run(driver=Drivers.RPI, frame_rate=24, **kwargs):
     app.router.add_static('/cam_data', app['frame_manager'].path, show_index=True)
     app.router.add_static('/', CLIENT_BUILD_DIR)
 
+    logger.warning('Starting background tasks.')
     sio.start_background_task(stream_thumbs)
+    logger.warning('Starting server.')
     web.run_app(app, **kwargs)
 
     if app['frame_manager'].is_started:
