@@ -141,11 +141,15 @@ class FrameManager(object):
             extension=self.extension
         ))
 
+    def _update_latest_prevew_link(self, filename):
+        shutil.copyfile(filename, os.path.join(os.path.dirname(filename), 'latest.%s' % self.extension))
+
     def preview(self):
         self.truncate_previews()
         filename = self.get_preview_filename()
         self._preview(filename)
         self._previews += 1
+        self._update_latest_prevew_link(filename)
         return self._get_preview_img_data(filename)
 
     def _preview(self, filename):
