@@ -20,9 +20,9 @@ async def close_all_connections():
 
 async def send_camera_settings(sid=None):
     camera_setings = {
-        'frame_rate': app['frame_rate'],
-        'auto_shoot': app['auto_shoot'],
-        'shoot_timeout': app['shoot_timeout'],
+        'frameRate': app['frame_rate'],
+        'autoShoot': int(app['auto_shoot']),
+        'shootTimeout': app['shoot_timeout'],
     }
 
     logger.info('Update user(s) with camera settings.')
@@ -53,17 +53,36 @@ async def connect(sid, environ):
                    namespace='/cam')
 
 
-@sio.on('shoot', namespace='/cam')
-async def message(sid):
+@sio.on('update settings', namespace='/cam')
+async def message(sid, data):
+    logger.warning('Updating camera settings to {settings}'.format(settings=data))
+
+    try:
+        app['frame_rate'] = int(data['frameRate'])
+        app['auto_shoot'] = bool(data['autoShoot'])
+        app['shoot_timeout'] = int(data['shootTimeout'])
+    except ValueError:
+        logger.error('Error updating camera settings to {settings}'.format(settings=data))
+
+    await send_camera_settings(sid)
+
+
+async def shoot(sid=None):
     img = app['frame_manager'].shoot()
 
-    logger.debug('Sending image update for {filename} thumb'.format(filename=img.filename))
-    await sio.emit('image', img.__dict__, room=sid, namespace='/cam')
+    if sid is not None:
+        logger.debug('Sending image update for {filename} thumb'.format(filename=img.filename))
+        await sio.emit('image', img.__dict__, room=sid, namespace='/cam')
 
     logger.debug('Sending latest images update.')
     await sio.emit('latest images',
                    [img.__dict__ for img in app['frame_manager'].get_latest_images()],
                    namespace='/cam')
+
+
+@sio.on('shoot', namespace='/cam')
+async def message(sid):
+    shoot(sid)
 
 
 @sio.on('disconnect', namespace='/cam')
@@ -80,17 +99,25 @@ def disconnect(sid):
 async def stream_thumbs():
     """Send new image notification to client."""
     app['frame_count'] = 0
-    manager = app['frame_manager']
 
     while True:
         await sio.sleep(1 / app['frame_rate'])
 
-        if manager.is_started:
+        if app['frame_manager'].is_started:
             app['frame_count'] += 1
-            preview = manager.preview()
+            preview = app['frame_manager'].preview()
 
             logger.debug('Sending frame update for {filename} preview'.format(filename=preview.filename))
             await sio.emit('preview', preview.__dict__, namespace='/cam')
+
+
+async def auto_shoot():
+    """Perform periodic shoots."""
+    while True:
+        await sio.sleep(app['shoot_timeout'])
+
+        if app['frame_manager'].is_started and app['auto_shoot']:
+            await shoot()
 
 
 def run(driver=Drivers.RPI, frame_rate=24, **kwargs):
@@ -106,6 +133,8 @@ def run(driver=Drivers.RPI, frame_rate=24, **kwargs):
 
     logger.warning('Starting background tasks.')
     sio.start_background_task(stream_thumbs)
+    sio.start_background_task(auto_shoot)
+
     logger.warning('Starting server.')
     web.run_app(app, **kwargs)
 

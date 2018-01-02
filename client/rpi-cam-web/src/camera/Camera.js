@@ -34,7 +34,7 @@ class Camera extends Component {
   }
 
   render() {
-    return <Row>
+    return <Row className="Camera">
       <Button onClick={cameraApi.shootImage} block>
         <Image img={this.state.lastFrame} width={this.props.imageWidth} />
       </Button>

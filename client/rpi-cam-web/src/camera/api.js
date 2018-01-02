@@ -24,6 +24,7 @@ class CameraApi extends EventEmitter {
   constructor() {
     super();
 
+    this.settings = null;
     this.preview = null;
     this.lastImage = null;
     this.latestImages = null;
@@ -34,22 +35,25 @@ class CameraApi extends EventEmitter {
   setupListeners() {
     const self = this;
 
+    socket.on('settings', data => {
+      console.log('Camera settings:', data);
+      self.settings = data;
+      self.emit('settings changed');
+    });
+
     socket.on('preview', data => {
       self.preview = processImageData(data);
       self.emit('preview changed');
-      return true;
     });
 
     socket.on('disconnect', () => {
       self.preview = null;
       self.emit('preview changed');
-      return true;
     });
 
     socket.on('image', data => {
       self.lastImage = processImageData(data);
       self.emit('last image changed');
-      return true;
     });
 
     socket.on('latest images', data => {
@@ -58,8 +62,11 @@ class CameraApi extends EventEmitter {
       }
       self.latestImages = data;
       self.emit('latest images changed');
-      return true;
     });
+  }
+
+  getSettings() {
+    return this.settings;
   }
 
   getPreview() {
@@ -76,6 +83,18 @@ class CameraApi extends EventEmitter {
 
   shootImage() {
     socket.emit('shoot');
+  }
+
+  updateSettings(settings) {
+    socket.emit('update settings', settings);
+  }
+
+  subscribeToSettingsChange(cb) {
+    this.on('settings changed', cb);
+  }
+
+  unsubscribeFromSettingsChange(cb) {
+    this.off('settings changed', cb);
   }
 
   subscribeToPreviewChange(cb) {
