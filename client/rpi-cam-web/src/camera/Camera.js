@@ -14,7 +14,7 @@ class Camera extends Component {
   constructor(props) {
     super(props);
 
-    cameraApi.subscribeToPreviewChange(this.handlePreviewChange.bind(this));
+    cameraApi.subscribeToPreview(this.handlePreviewChange.bind(this));
   }
 
   handlePreviewChange() {
@@ -26,11 +26,11 @@ class Camera extends Component {
   }
 
   componentDidMount() {
-    cameraApi.subscribeToPreviewChange(this.handlePreviewChange.bind(this));
+    cameraApi.subscribeToPreview(this.handlePreviewChange.bind(this));
   }
 
   componentWillUnmount() {
-    cameraApi.unsubscribeFromPreviewChange(this.handlePreviewChange);
+    cameraApi.unsubscribeFromPreview(this.handlePreviewChange);
   }
 
   render() {

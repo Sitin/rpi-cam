@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 import { Button, Checkbox, Col, ControlLabel, Form, FormControl, FormGroup, Panel } from 'react-bootstrap';
 import './CameraControl.css'
 
+import { FPS } from './FPS';
 import { cameraApi } from './api';
 
 class CameraControl extends Component {
@@ -14,11 +15,11 @@ class CameraControl extends Component {
   }
 
   componentDidMount() {
-    cameraApi.subscribeToSettingsChange(this.handleSettingsChange.bind(this));
+    cameraApi.subscribeToSettings(this.handleSettingsChange.bind(this));
   }
 
   componentWillUnmount() {
-    cameraApi.unsubscribeFromSettingsChange(this.handleSettingsChange);
+    cameraApi.unsubscribeFromSettings(this.handleSettingsChange);
   }
 
   handleSettingsChange() {
@@ -48,50 +49,56 @@ class CameraControl extends Component {
   }
 
   render() {
-    return this.state.settings ? <Panel header={<h3>Camera settings</h3>}>
-      <Form horizontal onSubmit={this.handleSubmit} className="CameraControl-form">
-        <FormGroup controlId="frameRate">
-          <Col componentClass={ControlLabel} sm={4}>
-            Frame Rate
-          </Col>
-          <Col sm={8}>
-            <FormControl type="text" value={this.state.settings.frameRate}
-                         name="frameRate" onChange={this.handleInputChange}/>
-          </Col>
-        </FormGroup>
+    return this.state.settings ? (
+      <Panel header={<h3 onClick={() => this.setState({ expanded: !this.state.expanded })}>Camera settings</h3>}
+             collapsible expanded={this.state.expanded}>
 
-        <FormGroup controlId="autoShoot">
-          <Col smOffset={4} sm={8}>
-            <Checkbox checked={this.state.settings.autoShoot === 1}
-                      name="autoShoot" onChange={this.handleInputChange}>
-              Auto Shoot
-            </Checkbox>
-          </Col>
-        </FormGroup>
+        <Form horizontal onSubmit={this.handleSubmit} className="CameraControl-form">
+          <FormGroup controlId="frameRate">
+            <Col componentClass={ControlLabel} sm={4}>
+              Frame Rate (current FPS=<FPS/>)
+            </Col>
+            <Col sm={8}>
+              <FormControl type="text" value={this.state.settings.frameRate}
+                           name="frameRate" onChange={this.handleInputChange}/>
+            </Col>
+          </FormGroup>
 
-        <FormGroup controlId="shootTimeout">
-          <Col componentClass={ControlLabel} sm={4}>
-            Shoot Timeout
-          </Col>
-          <Col sm={8}>
-            <FormControl type="text" value={this.state.settings.shootTimeout}
-                         name="shootTimeout" onChange={this.handleInputChange}/>
-          </Col>
-        </FormGroup>
+          <FormGroup controlId="autoShoot">
+            <Col smOffset={4} sm={8}>
+              <Checkbox checked={this.state.settings.autoShoot === 1}
+                        name="autoShoot" onChange={this.handleInputChange}>
+                Auto Shoot
+              </Checkbox>
+            </Col>
+          </FormGroup>
 
-        <FormGroup controlId="submit">
-          <Col smOffset={4} sm={8}>
-            <Button type="submit">
-              Update
-            </Button>
-          </Col>
-        </FormGroup>
-      </Form>
-    </Panel> : null;
+          <FormGroup controlId="shootTimeout">
+            <Col componentClass={ControlLabel} sm={4}>
+              Shoot Timeout
+            </Col>
+            <Col sm={8}>
+              <FormControl type="text" value={this.state.settings.shootTimeout}
+                           name="shootTimeout" onChange={this.handleInputChange}/>
+            </Col>
+          </FormGroup>
+
+          <FormGroup controlId="submit">
+            <Col smOffset={4} sm={8}>
+              <Button type="submit">
+                Update
+              </Button>
+            </Col>
+          </FormGroup>
+        </Form>
+
+      </Panel>
+    ) : null;
   }
 
   state = {
     settings: null,
+    expanded: false,
   };
 }
 

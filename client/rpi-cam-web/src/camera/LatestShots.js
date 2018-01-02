@@ -7,11 +7,11 @@ import { Image } from '../shared/Image';
 
 class LatestShots extends Component {
   componentDidMount() {
-    cameraApi.subscribeToLatestImagesChange(this.handleLatestImagesChange.bind(this));
+    cameraApi.subscribeToLatestImages(this.handleLatestImagesChange.bind(this));
   }
 
   componentWillUnmount() {
-    cameraApi.unsubscribeFromLatestImagesChange(this.handleLatestImagesChange);
+    cameraApi.unsubscribeFromLatestImages(this.handleLatestImagesChange);
   }
 
   handleLatestImagesChange() {

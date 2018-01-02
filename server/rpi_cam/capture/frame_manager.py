@@ -50,6 +50,37 @@ class ImageData:
         return data
 
 
+class FPSCounter(object):
+    def __init__(self, frame_resolution=10):
+        self.frame_resolution = frame_resolution
+        self.ticks = 0
+        self.key_frame = 0
+        self.key_frame_time = None
+        self.fps = 0
+
+    def reset(self):
+        self.key_frame = self.ticks
+        self.key_frame_time = None
+        self.fps = 0
+
+    def tick(self):
+        self.ticks += 1
+        ticks_delta = self.ticks - self.key_frame
+
+        if self.key_frame_time is None:
+            self.key_frame_time = datetime.datetime.now()
+
+        if ticks_delta >= self.frame_resolution:
+            now = datetime.datetime.now()
+            delta = now - self.key_frame_time
+            time_delta = delta.total_seconds()
+
+            if time_delta > 0:
+                self.fps = ticks_delta / time_delta
+                self.key_frame_time = now
+                self.key_frame = self.ticks
+
+
 class FrameManager(object):
     THUMB_PREFIX = '__thumb__'
     
@@ -70,6 +101,8 @@ class FrameManager(object):
         self.url_prefix = url_prefix
         self.max_previews_count = max_previews_count
         self._previews = 0
+
+        self.fps_counter = FPSCounter()
 
         os.makedirs(self.path, exist_ok=True)
         self.reset_previews()
@@ -150,6 +183,7 @@ class FrameManager(object):
         self._preview(filename)
         self._previews += 1
         self._update_latest_prevew_link(filename)
+        self.fps_counter.tick()
         return self._get_preview_img_data(filename)
 
     def _preview(self, filename):
@@ -196,6 +230,7 @@ class FrameManager(object):
     @abc.abstractmethod
     def start(self):
         self.is_started = True
+        self.fps_counter.reset()
 
     @abc.abstractmethod
     def get_image(self):

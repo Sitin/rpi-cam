@@ -82,7 +82,7 @@ async def shoot(sid=None):
 
 @sio.on('shoot', namespace='/cam')
 async def message(sid):
-    shoot(sid)
+    await shoot(sid)
 
 
 @sio.on('disconnect', namespace='/cam')
@@ -98,13 +98,10 @@ def disconnect(sid):
 
 async def stream_thumbs():
     """Send new image notification to client."""
-    app['frame_count'] = 0
-
     while True:
         await sio.sleep(1 / app['frame_rate'])
 
         if app['frame_manager'].is_started:
-            app['frame_count'] += 1
             preview = app['frame_manager'].preview()
 
             logger.debug('Sending frame update for {filename} preview'.format(filename=preview.filename))
@@ -118,6 +115,16 @@ async def auto_shoot():
 
         if app['frame_manager'].is_started and app['auto_shoot']:
             await shoot()
+
+
+async def send_fps_updates():
+    """Perform periodic fps updates."""
+    while True:
+        await sio.sleep(1)
+
+        if app['frame_manager'].is_started:
+            logger.debug('FPS: %s' % app['frame_manager'].fps_counter.fps)
+            await sio.emit('fps', {'fps': app['frame_manager'].fps_counter.fps}, namespace='/cam')
 
 
 def run(driver=Drivers.RPI, frame_rate=24, **kwargs):
@@ -134,6 +141,7 @@ def run(driver=Drivers.RPI, frame_rate=24, **kwargs):
     logger.warning('Starting background tasks.')
     sio.start_background_task(stream_thumbs)
     sio.start_background_task(auto_shoot)
+    sio.start_background_task(send_fps_updates)
 
     logger.warning('Starting server.')
     web.run_app(app, **kwargs)

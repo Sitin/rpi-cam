@@ -6,11 +6,11 @@ import { Panel } from 'react-bootstrap';
 
 class LastShot extends Component {
   componentDidMount() {
-    cameraApi.subscribeToLastImageChange(this.handleLastImageChange.bind(this));
+    cameraApi.subscribeToLastImage(this.handleLastImageChange.bind(this));
   }
 
   componentWillUnmount() {
-    cameraApi.unsubscribeFromLastImageChange(this.handleLastImageChange);
+    cameraApi.unsubscribeFromLastImage(this.handleLastImageChange);
   }
 
   handleLastImageChange() {

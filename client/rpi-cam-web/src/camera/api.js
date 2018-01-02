@@ -28,6 +28,7 @@ class CameraApi extends EventEmitter {
     this.preview = null;
     this.lastImage = null;
     this.latestImages = null;
+    this.fps = 0;
 
     this.setupListeners();
   }
@@ -63,6 +64,11 @@ class CameraApi extends EventEmitter {
       self.latestImages = data;
       self.emit('latest images changed');
     });
+
+    socket.on('fps', data => {
+      self.fps = data.fps;
+      self.emit('fps changed');
+    });
   }
 
   getSettings() {
@@ -81,6 +87,10 @@ class CameraApi extends EventEmitter {
     return this.latestImages;
   }
 
+  getFPS() {
+    return this.fps;
+  }
+
   shootImage() {
     socket.emit('shoot');
   }
@@ -89,36 +99,44 @@ class CameraApi extends EventEmitter {
     socket.emit('update settings', settings);
   }
 
-  subscribeToSettingsChange(cb) {
+  subscribeToSettings(cb) {
     this.on('settings changed', cb);
   }
 
-  unsubscribeFromSettingsChange(cb) {
+  unsubscribeFromSettings(cb) {
     this.off('settings changed', cb);
   }
 
-  subscribeToPreviewChange(cb) {
+  subscribeToPreview(cb) {
     this.on('preview changed', cb);
   }
 
-  unsubscribeFromPreviewChange(cb) {
+  unsubscribeFromPreview(cb) {
     this.off('preview changed', cb);
   }
 
-  subscribeToLastImageChange(cb) {
+  subscribeToLastImage(cb) {
     this.on('last image changed', cb)
   }
 
-  unsubscribeFromLastImageChange(cb) {
+  unsubscribeFromLastImage(cb) {
     this.off('last image changed', cb)
   }
 
-  subscribeToLatestImagesChange(cb) {
+  subscribeToLatestImages(cb) {
     this.on('latest images changed', cb);
   }
 
-  unsubscribeFromLatestImagesChange(cb) {
+  unsubscribeFromLatestImages(cb) {
     this.off('latest images changed', cb);
+  }
+
+  subscribeToFPS(cb) {
+    this.on('fps changed', cb);
+  }
+
+  unsubscribeFromFPS(cb) {
+    this.off('fps changed', cb);
   }
 }
 
