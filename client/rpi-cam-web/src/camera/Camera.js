@@ -4,7 +4,7 @@ import { Button, Row } from 'react-bootstrap';
 
 import { Image } from '../shared/Image';
 import { LastShot } from './LastShot';
-import { subscribeToPreviews, shootImage, onDisconnect } from './api';
+import { cameraApi } from './api';
 
 import nothing from './nothing.png';
 
@@ -14,16 +14,28 @@ class Camera extends Component {
   constructor(props) {
     super(props);
 
-    subscribeToPreviews((err, lastFrame) => this.setState({
-      lastFrame: lastFrame
-    }));
+    cameraApi.subscribeToPreviewChange(this.handlePreviewChange.bind(this));
+  }
 
-    onDisconnect((err) => this.setState({ lastFrame: imageOfNothing }));
+  handlePreviewChange() {
+    let preview = cameraApi.getPreview() || { lastFrame: imageOfNothing };
+
+    this.setState({
+      lastFrame: preview,
+    });
+  }
+
+  componentDidMount() {
+    cameraApi.subscribeToPreviewChange(this.handlePreviewChange.bind(this));
+  }
+
+  componentWillUnmount() {
+    cameraApi.unsubscribeFromPreviewChange(this.handlePreviewChange);
   }
 
   render() {
     return <Row>
-      <Button onClick={shootImage} block>
+      <Button onClick={cameraApi.shootImage} block>
         <Image img={this.state.lastFrame} width={this.props.imageWidth} />
       </Button>
       <LastShot imageWidth={this.props.imageWidth} />

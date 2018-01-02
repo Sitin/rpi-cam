@@ -1,16 +1,22 @@
 import React, { Component } from 'react';
-import { subscribeToImages } from './api';
+import { cameraApi } from './api';
 import { Image } from '../shared/Image';
 
 import { Panel } from 'react-bootstrap';
 
 class LastShot extends Component {
-  constructor(props) {
-    super(props);
+  componentDidMount() {
+    cameraApi.subscribeToLastImageChange(this.handleLastImageChange.bind(this));
+  }
 
-    subscribeToImages((err, lastShot) => this.setState({
-      lastShot: lastShot
-    }));
+  componentWillUnmount() {
+    cameraApi.unsubscribeFromLastImageChange(this.handleLastImageChange);
+  }
+
+  handleLastImageChange() {
+    this.setState({
+      lastShot: cameraApi.getLastImage()
+    });
   }
 
   render() {
