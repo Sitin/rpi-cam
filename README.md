@@ -71,8 +71,16 @@ server/rpi_cam/mange.py runserver --driver=opencv
 
 ### Running nginx proxy
 
-You can run optional nginx proxy that speeds up static:
+You can run optional nginx proxy that speeds up static.
+
+First you need to create nginx config from template:
 
 ```sh
-bin/run_nginx.sh
+server/rpi_cam/mange.py nginx_conf
+```
+
+And then start the server:
+
+```sh
+server/rpi_cam/mange.py nginx
 ```

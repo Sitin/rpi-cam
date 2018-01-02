@@ -1,6 +1,6 @@
 daemon off;
 worker_processes 1;
-pid /tmp/nginx-rpi_cam.pid;
+pid {{ pid }};
 error_log /dev/stdout info;
 
 events {
@@ -11,7 +11,7 @@ http {
   access_log /dev/stdout;
 
   server {
-    listen 8000;
+    listen {{ port }};
     client_max_body_size 4G;
 
     server_name rpi-cam.ziatin.me;
@@ -29,24 +29,24 @@ http {
     }
 
     location /cam_data/ {
-      root /Users/sitin/Documents/Workspace/Raspberry-Pi/rpi-cam/server;
+      root {{ content_root }};
       access_log off;
       expires 3d;
     }
 
     location /cam_data/previws/latest.jpg {
-      root /Users/sitin/Documents/Workspace/Raspberry-Pi/rpi-cam/server;
+      root {{ content_root }};
       access_log off;
       expires -1;
-      set_header Cache-Control no-cache;
+      proxy_set_header Cache-Control no-cache;
     }
   }
 
   upstream aiohttp {
     # Unix domain servers
-    server unix:/tmp/rpi_cam.sock fail_timeout=0;
+    server unix:{{ socket }} fail_timeout=0;
 
     # Port-based server
-    server 127.0.0.1:8080 fail_timeout=0;
+    server 127.0.0.1:{{ rpi_cam_port }} fail_timeout=0;
   }
 }

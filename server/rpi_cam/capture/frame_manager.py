@@ -6,10 +6,9 @@ import os
 import shutil
 import uuid
 
-from rpi_cam.tools import get_logger, SERVER_DIR
+from rpi_cam.tools import get_logger
 
 
-DEFAULT_PATH = os.path.join(SERVER_DIR, 'cam_data')
 DEFAULT_PREVIEW_RESOLUTION = (320, 240)
 DEFAULT_THUMBNAIL_BOUNDS = (320, 240)
 DEFAULT_MAX_PREVIEWS_COUNT = 24 * 5
@@ -84,7 +83,7 @@ class FPSCounter(object):
 class FrameManager(object):
     THUMB_PREFIX = '__thumb__'
     
-    def __init__(self, path=DEFAULT_PATH,
+    def __init__(self, path,
                  preview_resolution=DEFAULT_PREVIEW_RESOLUTION,
                  thumbnail_bounds=DEFAULT_THUMBNAIL_BOUNDS,
                  url_prefix='',

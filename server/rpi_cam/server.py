@@ -2,7 +2,7 @@ from aiohttp import web
 from aiohttp_index import IndexMiddleware
 import socketio
 
-from rpi_cam.tools import get_logger, CLIENT_BUILD_DIR
+from rpi_cam.tools import get_logger, CLIENT_BUILD_DIR, CAM_DATA_DIR
 from rpi_cam.capture import get_frame_manager, Drivers
 
 
@@ -127,15 +127,15 @@ async def send_fps_updates():
             await sio.emit('fps', {'fps': app['frame_manager'].fps_counter.fps}, namespace='/cam')
 
 
-def run(driver=Drivers.RPI, frame_rate=24, **kwargs):
+def run(driver=Drivers.RPI, frame_rate=24, cam_data_dir=CAM_DATA_DIR, **kwargs):
     app['frame_rate'] = frame_rate
     app['auto_shoot'] = False
     app['shoot_timeout'] = 5
     app['client'] = 0
 
-    app['frame_manager'] = get_frame_manager(driver, url_prefix='/cam_data')
+    app['frame_manager'] = get_frame_manager(driver, cam_data_dir, url_prefix='/cam_data')
 
-    app.router.add_static('/cam_data', app['frame_manager'].path, show_index=True)
+    app.router.add_static('/cam_data', cam_data_dir, show_index=True)
     app.router.add_static('/', CLIENT_BUILD_DIR)
 
     logger.warning('Starting background tasks.')
