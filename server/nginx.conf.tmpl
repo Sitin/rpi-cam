@@ -37,8 +37,8 @@ http {
     location /cam_data/previws/latest.jpg {
       root {{ content_root }};
       access_log off;
-      expires -1;
-      proxy_set_header Cache-Control no-cache;
+      expires off;
+      add_header Cache-Control 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
     }
   }
 
