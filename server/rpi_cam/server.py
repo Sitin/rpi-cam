@@ -127,7 +127,7 @@ async def send_fps_updates():
             await sio.emit('fps', {'fps': app['frame_manager'].fps_counter.fps}, namespace='/cam')
 
 
-def run(driver=Drivers.RPI, frame_rate=24, cam_data_dir=CAM_DATA_DIR, **kwargs):
+def run(driver=Drivers.RPI, frame_rate=24, cam_data_dir=CAM_DATA_DIR, client_build_dir=CLIENT_BUILD_DIR, **kwargs):
     app['frame_rate'] = frame_rate
     app['auto_shoot'] = False
     app['shoot_timeout'] = 5
@@ -136,7 +136,7 @@ def run(driver=Drivers.RPI, frame_rate=24, cam_data_dir=CAM_DATA_DIR, **kwargs):
     app['frame_manager'] = get_frame_manager(driver, cam_data_dir, url_prefix='/cam_data')
 
     app.router.add_static('/cam_data', cam_data_dir, show_index=True)
-    app.router.add_static('/', CLIENT_BUILD_DIR)
+    app.router.add_static('/', client_build_dir)
 
     logger.warning('Starting background tasks.')
     sio.start_background_task(stream_thumbs)
