@@ -23,6 +23,7 @@ async def send_camera_settings(sid=None):
         'frameRate': app['frame_rate'],
         'autoShoot': int(app['auto_shoot']),
         'shootTimeout': app['shoot_timeout'],
+        'idleWhenAlone': int(app['idle_when_alone']),
     }
 
     logger.info('Update user(s) with camera settings.')
@@ -61,6 +62,7 @@ async def message(sid, data):
         app['frame_rate'] = int(data['frameRate'])
         app['auto_shoot'] = bool(data['autoShoot'])
         app['shoot_timeout'] = int(data['shootTimeout'])
+        app['idle_when_alone'] = bool(data['idleWhenAlone'])
     except ValueError:
         logger.error('Error updating camera settings to {settings}'.format(settings=data))
 
@@ -92,8 +94,10 @@ def disconnect(sid):
     app['client'] -= 1
 
     if app['client'] < 1 and app['frame_manager'].is_started:
-        logger.warning('No more clients. Closing camera...')
-        app['frame_manager'].stop()
+        logger.warning('No more clients.')
+        if app['idle_when_alone']:
+            logger.warning('Closing camera...')
+            app['frame_manager'].stop()
 
 
 async def stream_thumbs():
@@ -132,6 +136,7 @@ def run(driver=Drivers.RPI, frame_rate=24, cam_data_dir=CAM_DATA_DIR, client_bui
     app['auto_shoot'] = False
     app['shoot_timeout'] = 5
     app['client'] = 0
+    app['idle_when_alone'] = True
 
     app['frame_manager'] = get_frame_manager(driver, cam_data_dir, url_prefix='/cam_data')
 

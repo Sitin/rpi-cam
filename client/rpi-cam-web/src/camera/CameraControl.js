@@ -68,7 +68,7 @@ class CameraControl extends Component {
             <Col smOffset={4} sm={8}>
               <Checkbox checked={this.state.settings.autoShoot === 1}
                         name="autoShoot" onChange={this.handleInputChange}>
-                Auto Shoot
+                Auto Shoot <em>(off by default)</em>
               </Checkbox>
             </Col>
           </FormGroup>
@@ -80,6 +80,15 @@ class CameraControl extends Component {
             <Col sm={8}>
               <FormControl type="text" value={this.state.settings.shootTimeout}
                            name="shootTimeout" onChange={this.handleInputChange}/>
+            </Col>
+          </FormGroup>
+
+          <FormGroup controlId="idleWhenAlone">
+            <Col smOffset={4} sm={8}>
+              <Checkbox checked={this.state.settings.idleWhenAlone === 1}
+                        name="idleWhenAlone" onChange={this.handleInputChange}>
+                Stop camera when all clients disconnected <em>(on by default)</em>
+              </Checkbox>
             </Col>
           </FormGroup>
 
