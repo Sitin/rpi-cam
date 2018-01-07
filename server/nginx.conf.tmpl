@@ -28,22 +28,10 @@ http {
       proxy_set_header Connection "Upgrade";
     }
 
-    location /static {
-      root {{ client_build_dir }};
-      expires 3d;
-    }
-
     location /cam_data/ {
       root {{ content_root }};
       access_log off;
       expires 3d;
-    }
-
-    location /cam_data/previws/latest.jpg {
-      root {{ content_root }};
-      access_log off;
-      expires off;
-      add_header Cache-Control 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
     }
   }
 

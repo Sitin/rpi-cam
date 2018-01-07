@@ -70,6 +70,10 @@ async def message(sid, data):
 
 
 async def shoot(sid=None):
+    if not app['frame_manager'].is_started:
+        logger.error('Trying to shoot from idle frame manager.')
+        return
+
     img = app['frame_manager'].shoot()
 
     if sid is not None:
