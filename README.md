@@ -115,7 +115,7 @@ server/manage.py supervisor_conf
 Copy it into Supervisor configuration directory:
 
 ```sh
-sudo cp server/rpi_cam/rpi_cam-supervisor.conf /etc/supervisor/conf.d/rpi_cam-supervisor.conf
+sudo cp server/rpi_cam-supervisor.conf /etc/supervisor/conf.d/rpi_cam-supervisor.conf
 ```
 
 And restart the service:

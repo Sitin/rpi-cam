@@ -10,7 +10,7 @@ from jinja2 import Template
 
 import rpi_cam.server
 from rpi_cam.capture import Drivers
-from rpi_cam.tools import SERVER_DIR, CAM_DATA_DIR, CLIENT_BUILD_DIR
+from rpi_cam.tools import SERVER_DIR, CAM_DATA_DIR, CLIENT_BUILD_DIR, PROJECT_DIR
 
 
 manager = Manager()
@@ -79,7 +79,7 @@ def supervisor_conf(path=DEFAULT_SUPERVISOR_CONF_FILE,
     """Generates nginx config"""
     with open(SUPERVISOR_CONF_TEMPLATE) as tmpl:
         template = Template(tmpl.read())
-        config = template.render(command=command, args=' '.join(args))
+        config = template.render(command=command, args=' '.join(args), project_dir=PROJECT_DIR)
 
         with open(path, 'w') as conf:
             conf.write(config)
