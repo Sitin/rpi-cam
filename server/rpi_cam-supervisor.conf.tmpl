@@ -1,0 +1,10 @@
+[program:rpi_cam]
+numprocs = 1
+numprocs_start = 1
+process_name = rpi_cam
+
+command={{ command }} {{ args }}
+
+user=pi
+autostart=true
+autorestart=true

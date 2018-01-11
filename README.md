@@ -29,6 +29,19 @@ Then you should install Raspberry Pi packages (doesn't work on on non-RPi system
 pip3 install -r server/rpi_cam/capture/rpi_capture/requirements.txt
 ```
 
+In order to use Pillow you have to install the following dependencies:
+
+```sh
+sudo apt-get install libopenjp2-7 libopenjp2-7-dev
+sudo apt-get install libtiff5
+```
+
+To use `nginx` you also have to:
+
+```sh
+sudo apt-get install nginx
+``` 
+
 ### Installing alternative (non-RPi) camera drive dependencies
 
 For development on non-raspberry environments we have OpenCV camera driver (too hard and slow on RPi's):
@@ -83,4 +96,30 @@ And then start the server:
 
 ```sh
 server/rpi_cam/mange.py nginx
+```
+
+### Running via [Supervisor](http://supervisord.org/)
+
+First of all, you should install Supervisor:
+
+```sh
+sudo apt-get install supervisor
+```
+
+Then create configuration file:
+
+```sh
+server/rpi_cam/mange.py supervisor_conf
+```
+
+Copy it into Supervisor configuration directory:
+
+```sh
+sudo cp server/rpi_cam/rpi_cam-supervisor.conf /etc/supervisor/conf.d/rpi_cam-supervisor.conf
+```
+
+And restart the service:
+
+```sh
+sudo service supervisor restart
 ```

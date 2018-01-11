@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import shutil
 import subprocess
@@ -16,6 +18,9 @@ manager = Manager()
 NGINX_CONF_TEMPLATE = os.path.join(SERVER_DIR, 'nginx.conf.tmpl')
 DEFAULT_NGINX_CONF_FILE = os.path.join(SERVER_DIR, 'nginx.conf')
 
+SUPERVISOR_CONF_TEMPLATE = os.path.join(SERVER_DIR, 'rpi_cam-supervisor.conf.tmpl')
+DEFAULT_SUPERVISOR_CONF_FILE = os.path.join(SERVER_DIR, 'rpi_cam-supervisor.conf')
+
 DEFAULT_SOCKET = '/tmp/rpi_cam.sock'
 DEFAULT_RPI_CAM_PORT = 8080
 DEFAULT_FRAME_RATE = 24
@@ -23,6 +28,11 @@ DEFAULT_FRAME_RATE = 24
 NGINX_DEFAULTS = {
     'pid': '/tmp/nginx-rpi_cam.pid',
     'port': 8000,
+}
+
+SUPERVISOR_DEFAULTS = {
+    'command': os.path.join(SERVER_DIR, 'manage.py') + ' runserver',
+    'args': [],
 }
 
 LATEST_CLIENT_BUILD_URL = 'https://www.dropbox.com/s/khbgbpa7xxeqgfj/rpi_cam-client-build.tar.gz?dl=1'
@@ -57,6 +67,19 @@ def nginx_conf(path=DEFAULT_NGINX_CONF_FILE,
         template = Template(tmpl.read())
         config = template.render(pid=pid, content_root=content_root, socket=socket,
                                  port=port, rpi_cam_port=rpi_cam_port, client_build_dir=client_build_dir)
+
+        with open(path, 'w') as conf:
+            conf.write(config)
+
+
+@manager.command
+def supervisor_conf(path=DEFAULT_SUPERVISOR_CONF_FILE,
+                    command=SUPERVISOR_DEFAULTS['command'],
+                    args=SUPERVISOR_DEFAULTS['args']):
+    """Generates nginx config"""
+    with open(SUPERVISOR_CONF_TEMPLATE) as tmpl:
+        template = Template(tmpl.read())
+        config = template.render(command=command, args=' '.join(args))
 
         with open(path, 'w') as conf:
             conf.write(config)
