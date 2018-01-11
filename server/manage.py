@@ -75,11 +75,12 @@ def nginx_conf(path=DEFAULT_NGINX_CONF_FILE,
 @manager.command
 def supervisor_conf(path=DEFAULT_SUPERVISOR_CONF_FILE,
                     command=SUPERVISOR_DEFAULTS['command'],
-                    args=SUPERVISOR_DEFAULTS['args']):
+                    args=SUPERVISOR_DEFAULTS['args'],
+                    log_dir=PROJECT_DIR):
     """Generates nginx config"""
     with open(SUPERVISOR_CONF_TEMPLATE) as tmpl:
         template = Template(tmpl.read())
-        config = template.render(command=command, args=' '.join(args), project_dir=PROJECT_DIR)
+        config = template.render(command=command, args=' '.join(args), project_dir=PROJECT_DIR, log_dir=log_dir)
 
         with open(path, 'w') as conf:
             conf.write(config)
