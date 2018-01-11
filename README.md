@@ -73,13 +73,13 @@ Running
 To run camera server:
 
 ```sh
-server/mange.py runserver
+server/manage.py runserver
 ```
 
 For non-raspberry environments:
 
 ```sh
-server/mange.py runserver --driver=opencv
+server/manage.py runserver --driver=opencv
 ```
 
 ### Running nginx proxy
@@ -89,13 +89,13 @@ You can run optional nginx proxy that speeds up static.
 First you need to create nginx config from template:
 
 ```sh
-server/mange.py nginx_conf
+server/manage.py nginx_conf
 ```
 
 And then start the server:
 
 ```sh
-server/mange.py nginx
+server/manage.py nginx
 ```
 
 ### Running via [Supervisor](http://supervisord.org/)
@@ -109,7 +109,7 @@ sudo apt-get install supervisor
 Then create configuration file:
 
 ```sh
-server/mange.py supervisor_conf
+server/manage.py supervisor_conf
 ```
 
 Copy it into Supervisor configuration directory:
