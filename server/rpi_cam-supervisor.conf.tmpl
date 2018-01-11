@@ -10,13 +10,13 @@ directory={{ project_dir }}
 
 redirect_stderr=false
 
-stdout_logfile=/tmp/rpi_cam.log
+stdout_logfile={{ project_dir }}/logs/rpi_cam.log
 stdout_logfile_maxbytes=1MB
 stdout_logfile_backups=10
 stdout_capture_maxbytes=1MB
 stdout_events_enabled=false
 
-stderr_logfile=/tmp/rpi_cam-error.log
+stderr_logfile={{ project_dir }}/logs/rpi_cam-error.log
 stderr_logfile_maxbytes=1MB
 stderr_logfile_backups=10
 stderr_capture_maxbytes=1MB
