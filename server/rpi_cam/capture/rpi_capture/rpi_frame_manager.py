@@ -65,7 +65,7 @@ class PiCameraFrameManager(FrameManager):
         return {
             'is_critical': False,
             'data': {
-                'temperature': subprocess.getoutput(['/opt/vc/bin/vcgencmd', 'measure_temp']),
+                'temperature': subprocess.getoutput('/opt/vc/bin/vcgencmd measure_temp'),
             }
         }
 
