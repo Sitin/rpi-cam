@@ -116,19 +116,27 @@ class FrameManager(object):
 
     def get_latest_previews(self, count):
         previews = glob.glob(os.path.join(self.preview_path, '*.%s' % self.extension))
+        self.logger.debug('Loaded latest previews: {files}'.format(files=previews))
+
         return sorted(previews, key=os.path.getctime)[count:]
 
     def get_latest_images(self, count=DEFAULT_LATEST_IMAGES_COUNT):
         images = glob.glob(os.path.join(self.path, '*.%s' % self.extension))
         images = [img for img in images if not os.path.basename(img).startswith(self.THUMB_PREFIX)]
         latest_images = sorted(images, key=os.path.getctime, reverse=True)[:count]
+
+        self.logger.debug('Loaded latest images: {files}'.format(files=latest_images))
+
         return [self.get_image_data(img) for img in latest_images]
 
     def reset_previews(self):
+        self.logger.info('Resetting previews.')
+
         try:
             shutil.rmtree(self.preview_path)
         except FileNotFoundError:
             pass
+
         os.makedirs(self.preview_path, exist_ok=True)
 
     def truncate_previews(self):
@@ -165,8 +173,14 @@ class FrameManager(object):
         if thumbnail_data is None:
             thumbnail_data = self.get_img_thumbnail_data(filename)
 
+        if self.image_resolution is None:
+            image = Image.open(filename)
+            resolution = image.size
+        else:
+            resolution = self.image_resolution
+
         return ImageData(os.path.basename(filename),
-                         self.image_resolution,
+                         resolution,
                          url_prefix=self.url_prefix,
                          thumbnail=thumbnail_data)
 
@@ -179,9 +193,14 @@ class FrameManager(object):
     def preview(self):
         self.truncate_previews()
         filename = self.get_preview_filename()
+
         self._preview(filename)
         self._previews += 1
+
         self.fps_counter.tick()
+
+        self.logger.debug('Created preview #{no}: "{filename}"'.format(no=self._previews, filename=filename))
+
         return self._get_preview_img_data(filename)
 
     def _preview(self, filename):
@@ -217,6 +236,7 @@ class FrameManager(object):
 
         image_data = self.get_image_data(filename, thumbnail_data)
         self.logger.warning('Image "{filename}" saved.'.format(filename=image_data.filename))
+
         return image_data
 
     def _shoot(self, filename):
