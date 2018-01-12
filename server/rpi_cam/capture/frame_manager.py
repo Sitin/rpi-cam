@@ -17,7 +17,7 @@ DEFAULT_LATEST_IMAGES_COUNT = 6
 default_logger = get_logger('rpi_cam.capture.frame_manager.default')
 
 
-class ImageDataError(OSError):
+class ImageError(OSError):
     pass
 
 
@@ -127,17 +127,13 @@ class FrameManager(object):
         return sorted(previews, key=os.path.getctime)[count:]
 
     def get_latest_images(self, count=DEFAULT_LATEST_IMAGES_COUNT):
-        try:
-            images = glob.glob(os.path.join(self.path, '*.%s' % self.extension))
-            images = [img for img in images if not os.path.basename(img).startswith(self.THUMB_PREFIX)]
-            latest_images = sorted(images, key=os.path.getctime, reverse=True)[:count]
+        images = glob.glob(os.path.join(self.path, '*.%s' % self.extension))
+        images = [img for img in images if not os.path.basename(img).startswith(self.THUMB_PREFIX)]
+        latest_images = sorted(images, key=os.path.getctime, reverse=True)[:count]
 
-            self.logger.debug('Loaded latest images: {files}'.format(files=latest_images))
+        self.logger.debug('Loaded latest images: {files}'.format(files=latest_images))
 
-            return [self.get_image_data(img) for img in latest_images]
-        except ImageDataError as e:
-            self.logger.error('Can not load latest images: {error}'.format(error=e))
-            return []
+        return [self.get_image_data(img) for img in latest_images]
 
     def reset_previews(self):
         self.logger.info('Resetting previews.')
@@ -204,7 +200,7 @@ class FrameManager(object):
                              url_prefix=self.url_prefix,
                              thumbnail=thumbnail_data)
         except OSError:
-            raise ImageDataError('Can not get image data for file: {filename}'.format(filename=filename))
+            raise ImageError('Can not get image data for file: {filename}'.format(filename=filename))
 
     def get_preview_filename(self):
         return os.path.join(self.preview_path, '{name}.{extension}'.format(
@@ -260,10 +256,9 @@ class FrameManager(object):
         self._shoot(filename)
         thumbnail_data = self.make_thumbnail(filename)
 
-        image_data = self.get_image_data(filename, thumbnail_data)
-        self.logger.warning('Image "{filename}" saved.'.format(filename=image_data.filename))
+        self.logger.warning('Image "{filename}" saved.'.format(filename=filename))
 
-        return image_data
+        return self.get_image_data(filename, thumbnail_data)
 
     def _shoot(self, filename):
         img = self.get_image()

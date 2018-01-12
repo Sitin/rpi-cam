@@ -5,6 +5,7 @@ import socketio
 
 from rpi_cam.tools import get_logger, CLIENT_BUILD_DIR, CAM_DATA_DIR
 from rpi_cam.capture import get_frame_manager, Drivers
+from rpi_cam.capture.frame_manager import ImageError
 
 
 logger = get_logger('rpi_cam.server')
@@ -34,6 +35,25 @@ async def send_camera_settings(sid=None):
                    namespace='/cam')
 
 
+async def send_error(error, context=None, sid=None):
+    await sio.emit('error',
+                   {
+                       'text': error.strerror,
+                       'context': context
+                   },
+                   room=sid, namespace='/cam')
+
+
+async def send_latest_images_update(sid=None):
+    try:
+        await sio.emit('latest images',
+                       [img.__dict__ for img in app['frame_manager'].get_latest_images()],
+                       sid=sid,
+                       namespace='/cam')
+    except ImageError as e:
+        await send_error(e, 'send_latest_images_update', sid=sid)
+
+
 @sio.on('connect', namespace='/cam')
 async def connect(sid, environ):
     logger.warning('Connection established: {sid} from {origin}.'.format(
@@ -49,10 +69,7 @@ async def connect(sid, environ):
     await send_camera_settings(sid)
 
     logger.info('Initialising user with latest images.')
-    await sio.emit('latest images',
-                   [img.__dict__ for img in app['frame_manager'].get_latest_images()],
-                   sid=sid,
-                   namespace='/cam')
+    await send_latest_images_update(sid)
 
 
 @sio.on('update settings', namespace='/cam')
@@ -75,16 +92,17 @@ async def shoot(sid=None):
         logger.error('Trying to shoot from idle frame manager.')
         return
 
-    img = app['frame_manager'].shoot()
+    try:
+        img = app['frame_manager'].shoot()
 
-    if sid is not None:
-        logger.debug('Sending image update for {filename} thumb'.format(filename=img.filename))
-        await sio.emit('image', img.__dict__, room=sid, namespace='/cam')
+        if sid is not None and img is not None:
+            logger.debug('Sending update for recently shot image of {filename}'.format(filename=img.filename))
+            await sio.emit('image', img.__dict__, room=sid, namespace='/cam')
 
-    logger.debug('Sending latest images update.')
-    await sio.emit('latest images',
-                   [img.__dict__ for img in app['frame_manager'].get_latest_images()],
-                   namespace='/cam')
+        logger.debug('Sending latest images update.')
+        await send_latest_images_update()
+    except ImageError as e:
+        await send_error(e, 'shoot', sid=sid)
 
 
 @sio.on('shoot', namespace='/cam')
