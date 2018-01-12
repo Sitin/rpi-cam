@@ -269,6 +269,12 @@ class FrameManager(object):
         if img is not None:
             self.write_img(filename, img)
 
+    def report_state(self):
+        return {
+            'is_critical': False,
+            'data': {}
+        }
+
     @abc.abstractmethod
     def start(self):
         self.is_started = True

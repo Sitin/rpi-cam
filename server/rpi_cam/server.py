@@ -176,6 +176,18 @@ async def send_fps_updates():
             await sio.emit('fps', {'fps': app['frame_manager'].fps_counter.fps}, namespace='/cam')
 
 
+async def send_status_reports():
+    """Sends periodic status reports to client."""
+    logger.debug('Starting camera reporting background task.')
+    while True:
+
+        if app['frame_manager'].is_started:
+            report = app['frame_manager'].report_state()
+            send_log_message(report['data'], 'Camera report', is_error=report['is_critical'])
+
+        await sio.sleep(60)
+
+
 def run(driver=Drivers.RPI, frame_rate=24,
         cam_data_dir=CAM_DATA_DIR, client_build_dir=CLIENT_BUILD_DIR,
         log_level=logging.INFO,
@@ -200,6 +212,7 @@ def run(driver=Drivers.RPI, frame_rate=24,
     sio.start_background_task(stream_thumbs)
     sio.start_background_task(auto_shoot)
     sio.start_background_task(send_fps_updates)
+    sio.start_background_task(send_status_reports)
 
     logger.warning('Starting server with parameter set: {kwargs}.'.format(kwargs=kwargs))
     web.run_app(app, **kwargs)

@@ -1,4 +1,5 @@
 from io import BytesIO
+import subprocess
 
 import picamera
 from PIL import Image
@@ -59,6 +60,14 @@ class PiCameraFrameManager(FrameManager):
     def _shoot(self, filename):
         self.camera.capture(filename)
         self.image_resolution = Image.open(filename).size
+
+    def report_state(self):
+        return {
+            'is_critical': False,
+            'data': {
+                'temperature': subprocess.run(['/opt/vc/bin/vcgencmd', 'measure_temp']).stdout,
+            }
+        }
 
     def write_img(self, filename, img):
         img.save(filename)
