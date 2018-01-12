@@ -6,12 +6,14 @@ Raspberry Pi Camera Application
 Installation
 ------------
 
-We strongly suggest to use virtual environment:
+We suggest to use virtual environment for development needs:
 
 ```sh
 mkvirtualenv --python=`which python3` rpi_cam
 workon rpi_cam
 ```
+
+Still, for RPi it may be an overkill.
 
 ### Installing general server dependencies
 
@@ -35,12 +37,6 @@ In order to use Pillow you have to install the following dependencies:
 sudo apt-get install libopenjp2-7 libopenjp2-7-dev
 sudo apt-get install libtiff5
 ```
-
-To use `nginx` you also have to:
-
-```sh
-sudo apt-get install nginx
-``` 
 
 ### Installing alternative (non-RPi) camera drive dependencies
 
@@ -86,16 +82,43 @@ server/manage.py runserver --driver=opencv
 
 You can run optional nginx proxy that speeds up static.
 
+For Rapbian Lit install it with:
+
+```sh
+sudo apt-get install nginx
+```
+
+For OS X:
+
+```sh
+brew install nginx
+```
+
 First you need to create nginx config from template:
 
 ```sh
 server/manage.py nginx_conf
 ```
 
-And then start the server:
+And then start the server to test configuration:
 
 ```sh
 server/manage.py nginx
+```
+
+#### Configuring nginx service on Raspbian
+
+To create a config for the main nginx sever that runs on port 80:
+
+```sh
+server/manage.py nginx_conf --port=80 --pid=/run/nginx.pid --as-service
+```
+
+Then save nginx configuration and replace it by the created config:
+
+```sh
+sudo cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.orig
+sudo cp server/nginx.conf /etc/nginx/nginx.conf
 ```
 
 ### Running via [Supervisor](http://supervisord.org/)
