@@ -17,6 +17,10 @@ DEFAULT_LATEST_IMAGES_COUNT = 6
 default_logger = get_logger('rpi_cam.capture.frame_manager.default')
 
 
+class ImageDataError(OSError):
+    pass
+
+
 class ImageData:
     def __init__(self, filename, resolution, thumbnail=None, url_prefix=''):
         self.filename = filename
@@ -93,6 +97,7 @@ class FrameManager(object):
         self.logger = logger
         self.path = path
         self.preview_path = os.path.join(path, 'previews')
+        self.gallery_path = os.path.join(path, 'gallery')
         self.preview_resolution = preview_resolution
         self.thumbnail_bounds = thumbnail_bounds
         self.image_resolution = None
@@ -108,6 +113,7 @@ class FrameManager(object):
 
         os.makedirs(self.path, exist_ok=True)
         self.reset_previews()
+        self.move_previous_session_to_gallery()
 
     def _get_preview_img_data(self, filename):
         return ImageData('previews/' + os.path.basename(filename),
@@ -121,13 +127,17 @@ class FrameManager(object):
         return sorted(previews, key=os.path.getctime)[count:]
 
     def get_latest_images(self, count=DEFAULT_LATEST_IMAGES_COUNT):
-        images = glob.glob(os.path.join(self.path, '*.%s' % self.extension))
-        images = [img for img in images if not os.path.basename(img).startswith(self.THUMB_PREFIX)]
-        latest_images = sorted(images, key=os.path.getctime, reverse=True)[:count]
+        try:
+            images = glob.glob(os.path.join(self.path, '*.%s' % self.extension))
+            images = [img for img in images if not os.path.basename(img).startswith(self.THUMB_PREFIX)]
+            latest_images = sorted(images, key=os.path.getctime, reverse=True)[:count]
 
-        self.logger.debug('Loaded latest images: {files}'.format(files=latest_images))
+            self.logger.debug('Loaded latest images: {files}'.format(files=latest_images))
 
-        return [self.get_image_data(img) for img in latest_images]
+            return [self.get_image_data(img) for img in latest_images]
+        except ImageDataError as e:
+            self.logger.error('Can not load latest images: {error}'.format(error=e))
+            return []
 
     def reset_previews(self):
         self.logger.info('Resetting previews.')
@@ -138,6 +148,15 @@ class FrameManager(object):
             pass
 
         os.makedirs(self.preview_path, exist_ok=True)
+
+    def move_previous_session_to_gallery(self):
+        self.logger.info('Saving previous session to gallery.')
+
+        os.makedirs(self.gallery_path, exist_ok=True)
+
+        images = glob.glob(os.path.join(self.path, '*.%s' % self.extension))
+        for img in images:
+            shutil.move(img, self.gallery_path)
 
     def truncate_previews(self):
         if self._previews < self.max_previews_count:
@@ -170,19 +189,22 @@ class FrameManager(object):
                             self.THUMB_PREFIX + os.path.basename(filename))
 
     def get_image_data(self, filename, thumbnail_data=None):
-        if thumbnail_data is None:
-            thumbnail_data = self.get_img_thumbnail_data(filename)
+        try:
+            if thumbnail_data is None:
+                thumbnail_data = self.get_img_thumbnail_data(filename)
 
-        if self.image_resolution is None:
-            image = Image.open(filename)
-            resolution = image.size
-        else:
-            resolution = self.image_resolution
+            if self.image_resolution is None:
+                image = Image.open(filename)
+                resolution = image.size
+            else:
+                resolution = self.image_resolution
 
-        return ImageData(os.path.basename(filename),
-                         resolution,
-                         url_prefix=self.url_prefix,
-                         thumbnail=thumbnail_data)
+            return ImageData(os.path.basename(filename),
+                             resolution,
+                             url_prefix=self.url_prefix,
+                             thumbnail=thumbnail_data)
+        except OSError:
+            raise ImageDataError('Can not get image data for file: {filename}'.format(filename=filename))
 
     def get_preview_filename(self):
         return os.path.join(self.preview_path, '{name}.{extension}'.format(
@@ -210,11 +232,15 @@ class FrameManager(object):
             self.write_img(filename, thumb)
 
     def make_thumbnail(self, filename):
-        thumb_filename = self.get_thumbnail_filename(filename)
-        img = Image.open(filename)
-        img.thumbnail(self.thumbnail_bounds, Image.ANTIALIAS)
-        img.save(thumb_filename)
-        return ImageData(os.path.basename(thumb_filename), img.size)
+        try:
+            thumb_filename = self.get_thumbnail_filename(filename)
+            img = Image.open(filename)
+            img.thumbnail(self.thumbnail_bounds, Image.ANTIALIAS)
+            img.save(thumb_filename)
+            return ImageData(os.path.basename(thumb_filename), img.size)
+        except OSError:
+            self.logger.error('Can not create thumbnail for {filename}'.format(filename=filename))
+            return None
 
     def get_img_thumbnail_data(self, filename):
         thumb_filename = self.get_thumbnail_filename(filename)
