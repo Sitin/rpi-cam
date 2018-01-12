@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 
 
 APP_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -13,11 +14,16 @@ def get_logger(name, level=logging.INFO):
     logger = logging.getLogger(name)
     logger.setLevel(level)
 
-    ch = logging.StreamHandler()
+    info = logging.StreamHandler(stream=sys.stdout)
+    error = logging.StreamHandler(stream=sys.stderr)
+    error.setLevel(logging.ERROR)
 
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    ch.setFormatter(formatter)
 
-    logger.addHandler(ch)
+    info.setFormatter(formatter)
+    error.setFormatter(formatter)
+
+    logger.addHandler(info)
+    logger.addHandler(error)
 
     return logger
