@@ -91,7 +91,6 @@ async def connect(sid, environ):
     logger.info('Initialising user with latest images.')
     await send_latest_images_update(sid)
 
-    await send_log_message('Welcome to RPi camera', 'Connect')
     await send_status_report()
 
 

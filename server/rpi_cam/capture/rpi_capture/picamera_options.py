@@ -14,10 +14,10 @@ _sensor_mode_to_framerate = {
     1: 24,  # Maximum is 30
     2: 10,  # Maximum is 15
     3: 10,  # Maximum is 15
-    4: 30,  # Maximum is 40
-    5: 30,  # Maximum is 40
-    6: 60,  # Maximum is 90
-    7: 90,
+    4: 15,  # Maximum is 40
+    5: 15,  # Maximum is 40
+    6: 30,  # Maximum is 90
+    7: 90,  # Maximum is 90
 }
 
 
