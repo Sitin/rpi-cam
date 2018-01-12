@@ -66,12 +66,17 @@ def nginx_conf(path=DEFAULT_NGINX_CONF_FILE,
                port=NGINX_DEFAULTS['port'],
                socket=DEFAULT_SOCKET,
                rpi_cam_port=DEFAULT_RPI_CAM_PORT,
+               as_service=False,
+               server_name='rpi-cam.ziatin.me',
+               user='www-data',
                ):
     """Generates nginx config"""
     with open(NGINX_CONF_TEMPLATE) as tmpl:
         template = Template(tmpl.read())
         config = template.render(pid=pid, content_root=content_root, socket=socket,
-                                 port=port, rpi_cam_port=rpi_cam_port, client_build_dir=client_build_dir)
+                                 port=port, rpi_cam_port=rpi_cam_port, client_build_dir=client_build_dir,
+                                 as_service=as_service, server_name=server_name, user=user,
+                                 )
 
         with open(path, 'w') as conf:
             conf.write(config)
