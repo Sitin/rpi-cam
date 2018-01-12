@@ -4,26 +4,20 @@ import picamera
 from PIL import Image
 
 from rpi_cam.capture.frame_manager import FrameManager
-
-
-RPI_DEFAULT_ARGS = {
-    'sensor_mode': 4,
-    'framerate': 15,
-    'resolution': '1640x1232',
-    'fullscreen': False,
-    'window': (10, 10, 320, 240),
-}
+from rpi_cam.capture.rpi_capture.picamera_options import DEFAULT_SENSOR_MODE, get_picamera_options
 
 
 class PiCameraFrameManager(FrameManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.sensor_mode = kwargs.get('sensor_mode', RPI_DEFAULT_ARGS['sensor_mode'])
-        self.framerate = kwargs.get('framerate', RPI_DEFAULT_ARGS['framerate'])
-        self.resolution = kwargs.get('resolution', RPI_DEFAULT_ARGS['resolution'])
-        self.fullscreen = kwargs.get('fullscreen', RPI_DEFAULT_ARGS['fullscreen'])
-        self.window = kwargs.get('window', RPI_DEFAULT_ARGS['window'])
+        picamera_options = get_picamera_options(kwargs.get('sensor_mode', DEFAULT_SENSOR_MODE))
+
+        self.sensor_mode = kwargs.get('sensor_mode', picamera_options['sensor_mode'])
+        self.framerate = kwargs.get('framerate', picamera_options['framerate'])
+        self.resolution = kwargs.get('resolution', picamera_options['resolution'])
+        self.fullscreen = kwargs.get('fullscreen', picamera_options['fullscreen'])
+        self.window = kwargs.get('window', picamera_options['window'])
 
     def start(self):
         super().start()

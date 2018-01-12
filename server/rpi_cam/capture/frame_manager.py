@@ -93,6 +93,7 @@ class FrameManager(object):
                  url_prefix='',
                  max_previews_count=DEFAULT_MAX_PREVIEWS_COUNT,
                  logger=default_logger,
+                 **kwargs
                  ):
         self.logger = logger
         self.path = path
@@ -114,6 +115,8 @@ class FrameManager(object):
         os.makedirs(self.path, exist_ok=True)
         self.reset_previews()
         self.move_previous_session_to_gallery()
+
+        self.logger.debug('Extra arguments will be processed by ancestors: {kwargs}'.format(kwargs=kwargs))
 
     def _get_preview_img_data(self, filename):
         return ImageData('previews/' + os.path.basename(filename),
