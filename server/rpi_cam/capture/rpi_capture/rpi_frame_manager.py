@@ -6,13 +6,44 @@ from PIL import Image
 from rpi_cam.capture.frame_manager import FrameManager
 
 
+RPI_DEFAULT_ARGS = {
+    'sensor_mode': 4,
+    'framerate': 15,
+    'resolution': '1640x1232',
+    'fullscreen': False,
+    'window': (10, 10, 320, 240),
+}
+
+
 class PiCameraFrameManager(FrameManager):
-    DELAY_AFTER_STOP = 2
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.sensor_mode = kwargs.get('sensor_mode', RPI_DEFAULT_ARGS['sensor_mode'])
+        self.framerate = kwargs.get('framerate', RPI_DEFAULT_ARGS['framerate'])
+        self.resolution = kwargs.get('resolution', RPI_DEFAULT_ARGS['resolution'])
+        self.fullscreen = kwargs.get('fullscreen', RPI_DEFAULT_ARGS['fullscreen'])
+        self.window = kwargs.get('window', RPI_DEFAULT_ARGS['window'])
 
     def start(self):
         super().start()
-        self.camera = picamera.PiCamera()
+        self.camera = picamera.PiCamera(sensor_mode=self.sensor_mode,
+                                        resolution=self.resolution,
+                                        framerate=self.framerate,
+                                        )
+
+        self.logger.info('Create RPi camera instance: {camera}'.format(
+            camera=self.camera
+        ))
+
         self.camera.start_preview()
+        self.camera.preview.fullscreen = self.fullscreen
+        if self.window is not None:
+            self.camera.preview.window = self.window
+
+        self.logger.info('Starting RPi camera preview with: {preview}'.format(
+            preview=self.camera.preview
+        ))
 
     def get_image(self):
         stream = BytesIO()

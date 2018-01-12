@@ -204,3 +204,9 @@ Since it will appear with the hostname given to Raspberry Pi, we suggest to chan
 ```sh
 sudo raspi-config
 ```
+
+To disable samba use (replace `samba` to `smbd` in case of error):
+
+```sh
+sudo systemctl disable samba
+```
