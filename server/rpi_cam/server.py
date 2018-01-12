@@ -69,6 +69,11 @@ async def send_latest_images_update(sid=None):
         await report_error(e, 'send_latest_images_update', sid=sid)
 
 
+async def send_status_report():
+    report = app['frame_manager'].report_state()
+    await send_log_message(report['data'], 'Camera report', is_error=report['is_critical'])
+
+
 @sio.on('connect', namespace='/cam')
 async def connect(sid, environ):
     logger.warning('Connection established: {sid} from {origin}.'.format(
@@ -87,6 +92,7 @@ async def connect(sid, environ):
     await send_latest_images_update(sid)
 
     await send_log_message('Welcome to RPi camera', 'Connect')
+    await send_status_report()
 
 
 @sio.on('update settings', namespace='/cam')
@@ -182,10 +188,7 @@ async def send_status_reports():
     """Sends periodic status reports to client."""
     logger.debug('Starting camera reporting background task.')
     while True:
-        if app['frame_manager'].is_started:
-            report = app['frame_manager'].report_state()
-            await send_log_message(report['data'], 'Camera report', is_error=report['is_critical'])
-
+        await send_status_report()
         await sio.sleep(app['report_timeout'])
 
 
