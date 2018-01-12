@@ -35,13 +35,27 @@ async def send_camera_settings(sid=None):
                    namespace='/cam')
 
 
-async def send_error(error, context=None, sid=None):
-    await sio.emit('error',
+async def send_log_message(msg, title=None, sid=None, is_error=False):
+    logger.info('Sending log message to client {sid} (None for all) about "{title}" (is error={is_error}).'.format(
+        sid=sid, title=title, is_error=is_error,
+    ))
+
+    msg_type = 'info'
+
+    if is_error:
+        msg_type = 'error'
+
+    await sio.emit('log',
                    {
-                       'text': error.strerror,
-                       'context': context
+                       'type': msg_type,
+                       'title': title,
+                       'text': repr(msg),
                    },
                    room=sid, namespace='/cam')
+
+
+async def report_error(msg, title=None, sid=None):
+    await send_log_message(msg, title=title, sid=sid, is_error=True)
 
 
 async def send_latest_images_update(sid=None):
@@ -51,7 +65,7 @@ async def send_latest_images_update(sid=None):
                        sid=sid,
                        namespace='/cam')
     except ImageError as e:
-        await send_error(e, 'send_latest_images_update', sid=sid)
+        await report_error(e, 'send_latest_images_update', sid=sid)
 
 
 @sio.on('connect', namespace='/cam')
@@ -70,6 +84,8 @@ async def connect(sid, environ):
 
     logger.info('Initialising user with latest images.')
     await send_latest_images_update(sid)
+
+    await send_log_message('Welcome to RPi camera', 'Connect')
 
 
 @sio.on('update settings', namespace='/cam')
@@ -101,8 +117,11 @@ async def shoot(sid=None):
 
         logger.debug('Sending latest images update.')
         await send_latest_images_update()
+
+        await send_log_message('Successfully shot image: {filename}'.format(filename=img.filename),
+                               'Shoot image', sid=sid)
     except ImageError as e:
-        await send_error(e, 'shoot', sid=sid)
+        await report_error(e, 'shoot', sid=sid)
 
 
 @sio.on('shoot', namespace='/cam')

@@ -29,6 +29,7 @@ class CameraApi extends EventEmitter {
     this.lastImage = null;
     this.latestImages = null;
     this.fps = 0;
+    this.messages = [];
 
     this.setupListeners();
   }
@@ -69,6 +70,12 @@ class CameraApi extends EventEmitter {
       self.fps = data.fps;
       self.emit('fps changed');
     });
+
+    socket.on('log', data => {
+      console.log('Got log message from server:', data);
+      self.messages.unshift(data);
+      self.emit('got message');
+    });
   }
 
   getSettings() {
@@ -89,6 +96,10 @@ class CameraApi extends EventEmitter {
 
   getFPS() {
     return this.fps;
+  }
+
+  getMessages() {
+    return this.messages;
   }
 
   shootImage() {
@@ -137,6 +148,14 @@ class CameraApi extends EventEmitter {
 
   unsubscribeFromFPS(cb) {
     this.off('fps changed', cb);
+  }
+
+  subscribeToMessages(cb) {
+    this.on('got message', cb);
+  }
+
+  unsubscribeFromErrors(cb) {
+    this.off('got message', cb);
   }
 }
 
