@@ -58,7 +58,13 @@ npm install
 Then to build client application run (under `client/rpi-cam-web`):
 
 ```sh
-pm run-script build
+npm run-script build
+```
+
+In case of RPi you can download latest pre-built client: 
+
+```sh
+server/manage.py get_client
 ```
 
 Running
