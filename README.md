@@ -146,3 +146,55 @@ And restart the service:
 ```sh
 sudo service supervisor restart
 ```
+
+### Setting up Samba (RPi only)
+
+Install Samba binnaries
+
+```sh
+sudo apt-get install samba samba-common-bin
+```
+
+Back up configuration:
+
+```sh
+sudo cp /etc/samba/smb.conf /etc/samba/smb.conf.orig
+```
+
+Then edit `/etc/samba/smb.conf`:
+
+```sh
+sudo nano /etc/samba/smb.conf
+```
+
+And add the following lines at the end of the file:
+
+```
+[rpi_cam]
+  comment = RPi camera images
+  path = <path to the repository>/server/cam_data
+  browseable = yes
+  read only = yes
+  guest ok = yes
+```
+
+Then restart the server:
+
+```sh
+sudo service samba restart
+```
+
+In case the command will return `Failed to restart samba.service: Unit samba.service is masked.` restart it with:
+
+```sh
+sudo service smbd restart
+```
+
+After that you will be able to see your camera files in a network environment.
+
+Since it will appear with the hostname given to Raspberry Pi, we suggest to change the hostname by `raspi-config`
+(`Network Options/N1 Hostname` option):
+
+```sh
+sudo raspi-config
+```
