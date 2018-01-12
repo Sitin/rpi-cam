@@ -33,7 +33,7 @@ class PiCameraFrameManager(FrameManager):
                                         )
 
         self.logger.info('Create RPi camera instance: {camera}'.format(
-            camera=self.camera.__dict__
+            camera=repr(self.camera)
         ))
 
         self.camera.start_preview()
@@ -42,7 +42,7 @@ class PiCameraFrameManager(FrameManager):
             self.camera.preview.window = self.window
 
         self.logger.info('Starting RPi camera preview with: {preview}'.format(
-            preview=self.camera.preview.__dict__
+            preview=repr(self.camera.preview)
         ))
 
     def get_image(self):
