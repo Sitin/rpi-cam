@@ -92,6 +92,16 @@ class CameraControl extends Component {
             </Col>
           </FormGroup>
 
+          <FormGroup controlId="reportTimeout">
+            <Col componentClass={ControlLabel} sm={4}>
+              Report Timeout
+            </Col>
+            <Col sm={8}>
+              <FormControl type="text" value={this.state.settings.reportTimeout}
+                           name="reportTimeout" onChange={this.handleInputChange}/>
+            </Col>
+          </FormGroup>
+
           <FormGroup controlId="submit">
             <Col smOffset={4} sm={8}>
               <Button type="submit">

@@ -26,6 +26,7 @@ async def send_camera_settings(sid=None):
         'autoShoot': int(app['auto_shoot']),
         'shootTimeout': app['shoot_timeout'],
         'idleWhenAlone': int(app['idle_when_alone']),
+        'reportTimeout': int(app['report_timeout']),
     }
 
     logger.info('Update user(s) with camera settings.')
@@ -97,6 +98,7 @@ async def message(sid, data):
         app['auto_shoot'] = bool(data['autoShoot'])
         app['shoot_timeout'] = int(data['shootTimeout'])
         app['idle_when_alone'] = bool(data['idleWhenAlone'])
+        app['report_timeout'] = int(data['reportTimeout'])
     except ValueError:
         logger.error('Error updating camera settings to {settings}'.format(settings=data))
 
@@ -180,12 +182,11 @@ async def send_status_reports():
     """Sends periodic status reports to client."""
     logger.debug('Starting camera reporting background task.')
     while True:
-
         if app['frame_manager'].is_started:
             report = app['frame_manager'].report_state()
-            send_log_message(report['data'], 'Camera report', is_error=report['is_critical'])
+            await send_log_message(report['data'], 'Camera report', is_error=report['is_critical'])
 
-        await sio.sleep(60)
+        await sio.sleep(app['report_timeout'])
 
 
 def run(driver=Drivers.RPI, frame_rate=24,
@@ -199,6 +200,7 @@ def run(driver=Drivers.RPI, frame_rate=24,
     app['shoot_timeout'] = 5
     app['client'] = 0
     app['idle_when_alone'] = True
+    app['report_timeout'] = 30
 
     app['frame_manager'] = get_frame_manager(driver, cam_data_dir,
                                              url_prefix='/cam_data',
