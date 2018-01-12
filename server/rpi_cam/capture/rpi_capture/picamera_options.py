@@ -21,7 +21,7 @@ _sensor_mode_to_framerate = {
 }
 
 
-DEFAULT_SENSOR_MODE = 2
+DEFAULT_SENSOR_MODE = 4
 
 
 def get_picamera_options(sensor_mode=DEFAULT_SENSOR_MODE):
