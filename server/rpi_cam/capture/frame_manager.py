@@ -14,7 +14,7 @@ DEFAULT_THUMBNAIL_BOUNDS = (320, 240)
 DEFAULT_MAX_PREVIEWS_COUNT = 24 * 5
 DEFAULT_LATEST_IMAGES_COUNT = 6
 
-logger = get_logger('rpi_cam.capture.frame_manager')
+default_logger = get_logger('rpi_cam.capture.frame_manager.default')
 
 
 class ImageData:
@@ -87,7 +87,10 @@ class FrameManager(object):
                  preview_resolution=DEFAULT_PREVIEW_RESOLUTION,
                  thumbnail_bounds=DEFAULT_THUMBNAIL_BOUNDS,
                  url_prefix='',
-                 max_previews_count=DEFAULT_MAX_PREVIEWS_COUNT):
+                 max_previews_count=DEFAULT_MAX_PREVIEWS_COUNT,
+                 logger=default_logger,
+                 ):
+        self.logger = logger
         self.path = path
         self.preview_path = os.path.join(path, 'previews')
         self.preview_resolution = preview_resolution
@@ -132,7 +135,7 @@ class FrameManager(object):
         if self._previews < self.max_previews_count:
             return
 
-        logger.info('Truncating previews to maximum count of {count}...'.format(
+        self.logger.info('Truncating previews to maximum count of {count}...'.format(
             count=self.max_previews_count
         ))
 
@@ -202,7 +205,7 @@ class FrameManager(object):
                              thumbnail.size,
                              url_prefix=self.url_prefix)
         except FileNotFoundError:
-            logger.warning('Creating missing thumbnail for image {filename}.'.format(
+            self.logger.warning('Creating missing thumbnail for image {filename}.'.format(
                 filename=os.path.basename(filename)
             ))
             return self.make_thumbnail(filename)
@@ -213,7 +216,7 @@ class FrameManager(object):
         thumbnail_data = self.make_thumbnail(filename)
 
         image_data = self.get_image_data(filename, thumbnail_data)
-        logger.warning('Image "{filename}" saved.'.format(filename=image_data.filename))
+        self.logger.warning('Image "{filename}" saved.'.format(filename=image_data.filename))
         return image_data
 
     def _shoot(self, filename):

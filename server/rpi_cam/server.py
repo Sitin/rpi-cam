@@ -1,5 +1,6 @@
 from aiohttp import web
 from aiohttp_index import IndexMiddleware
+import logging
 import socketio
 
 from rpi_cam.tools import get_logger, CLIENT_BUILD_DIR, CAM_DATA_DIR
@@ -106,6 +107,7 @@ def disconnect(sid):
 
 async def stream_thumbs():
     """Send new image notification to client."""
+    logger.debug('Starting thumbnail streaming background task.')
     while True:
         await sio.sleep(1 / app['frame_rate'])
 
@@ -118,6 +120,7 @@ async def stream_thumbs():
 
 async def auto_shoot():
     """Perform periodic shoots."""
+    logger.debug('Starting auto shoot background task.')
     while True:
         await sio.sleep(app['shoot_timeout'])
 
@@ -127,6 +130,7 @@ async def auto_shoot():
 
 async def send_fps_updates():
     """Perform periodic fps updates."""
+    logger.debug('Starting FPS update background task.')
     while True:
         await sio.sleep(1)
 
@@ -135,14 +139,22 @@ async def send_fps_updates():
             await sio.emit('fps', {'fps': app['frame_manager'].fps_counter.fps}, namespace='/cam')
 
 
-def run(driver=Drivers.RPI, frame_rate=24, cam_data_dir=CAM_DATA_DIR, client_build_dir=CLIENT_BUILD_DIR, **kwargs):
+def run(driver=Drivers.RPI, frame_rate=24,
+        cam_data_dir=CAM_DATA_DIR, client_build_dir=CLIENT_BUILD_DIR,
+        log_level=logging.INFO,
+        **kwargs):
+    logger.setLevel(log_level)
+
     app['frame_rate'] = frame_rate
     app['auto_shoot'] = False
     app['shoot_timeout'] = 5
     app['client'] = 0
     app['idle_when_alone'] = True
 
-    app['frame_manager'] = get_frame_manager(driver, cam_data_dir, url_prefix='/cam_data')
+    app['frame_manager'] = get_frame_manager(driver, cam_data_dir,
+                                             url_prefix='/cam_data',
+                                             logger=get_logger('rpi_cam.capture.frame_manager', level=log_level),
+                                             )
 
     app.router.add_static('/cam_data', cam_data_dir, show_index=True)
     app.router.add_static('/', client_build_dir)
@@ -152,7 +164,7 @@ def run(driver=Drivers.RPI, frame_rate=24, cam_data_dir=CAM_DATA_DIR, client_bui
     sio.start_background_task(auto_shoot)
     sio.start_background_task(send_fps_updates)
 
-    logger.warning('Starting server.')
+    logger.warning('Starting server with parameter set: {kwargs}.'.format(kwargs=kwargs))
     web.run_app(app, **kwargs)
 
     if app['frame_manager'].is_started:

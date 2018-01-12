@@ -32,7 +32,9 @@ NGINX_DEFAULTS = {
 
 SUPERVISOR_DEFAULTS = {
     'command': os.path.join(SERVER_DIR, 'manage.py') + ' runserver',
-    'args': [],
+    'args': [
+        '--log-level INFO',
+    ],
 }
 
 LATEST_CLIENT_BUILD_URL = 'https://www.dropbox.com/s/khbgbpa7xxeqgfj/rpi_cam-client-build.tar.gz?dl=1'
@@ -46,11 +48,14 @@ def runserver(port=DEFAULT_RPI_CAM_PORT,
               driver=Drivers.RPI,
               client_build_dir=CLIENT_BUILD_DIR,
               cam_data_dir=CAM_DATA_DIR,
+              log_level='INFO',
               ):
     """Runs server at <port> (default is 8080)"""
     return rpi_cam.server.run(port=int(port), frame_rate=frame_rate,
                               cam_data_dir=cam_data_dir, client_build_dir=client_build_dir,
-                              path=path, host=host, driver=driver)
+                              path=path, host=host, driver=driver,
+                              log_level=log_level,
+                              )
 
 
 @manager.command
@@ -76,7 +81,8 @@ def nginx_conf(path=DEFAULT_NGINX_CONF_FILE,
 def supervisor_conf(path=DEFAULT_SUPERVISOR_CONF_FILE,
                     command=SUPERVISOR_DEFAULTS['command'],
                     args=SUPERVISOR_DEFAULTS['args'],
-                    log_dir=PROJECT_DIR):
+                    log_dir=PROJECT_DIR,
+                    ):
     """Generates nginx config"""
     with open(SUPERVISOR_CONF_TEMPLATE) as tmpl:
         template = Template(tmpl.read())
@@ -94,6 +100,7 @@ def nginx(conf_file=DEFAULT_NGINX_CONF_FILE):
 
 @manager.command
 def get_client(url=LATEST_CLIENT_BUILD_URL, path=CLIENT_BUILD_DIR, tmp_dir='/tmp'):
+    """Generates Supervisor config"""
     tmp_arc_path = os.path.join(tmp_dir, 'rpi_cam-client.tgz')
     urllib.request.urlretrieve(url, tmp_arc_path)
     shutil.rmtree(path, ignore_errors=True)
