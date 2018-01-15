@@ -93,6 +93,7 @@ class FrameManager(object):
                  url_prefix='',
                  max_previews_count=DEFAULT_MAX_PREVIEWS_COUNT,
                  logger=default_logger,
+                 beep_on_shoot=True,
                  **kwargs
                  ):
         self.logger = logger
@@ -109,6 +110,7 @@ class FrameManager(object):
         self.url_prefix = url_prefix
         self.max_previews_count = max_previews_count
         self._previews = 0
+        self.beep_on_shoot = beep_on_shoot
 
         self.fps_counter = FPSCounter()
 
@@ -260,8 +262,16 @@ class FrameManager(object):
         thumbnail_data = self.make_thumbnail(filename)
 
         self.logger.warning('Image "{filename}" saved.'.format(filename=filename))
+        self.beep()
 
         return self.get_image_data(filename, thumbnail_data)
+
+    def beep(self):
+        if self.beep_on_shoot:
+            self._beep()
+
+    def _beep(self):
+        pass
 
     def _shoot(self, filename):
         img = self.get_image()

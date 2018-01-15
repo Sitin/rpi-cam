@@ -29,7 +29,7 @@ class RPiCameraServer(object):
         self.camera_idle_timeout = 5
         self.camera_stop_task = None
         self.shoot_at_startup = True
-        self.startup_shooting_timeout = 30
+        self.startup_shooting_timeout = 300
 
         self.frame_manager = get_frame_manager(
             driver, cam_data_dir,

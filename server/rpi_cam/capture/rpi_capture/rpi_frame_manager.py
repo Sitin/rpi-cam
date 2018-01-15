@@ -77,3 +77,6 @@ class PiCameraFrameManager(FrameManager):
         self.camera.close()
         self.camera = None
         self.image_resolution = None
+
+    def _beep(self):
+        subprocess.call(['speaker-test', '-t', 'sine', '-f', '600'])
