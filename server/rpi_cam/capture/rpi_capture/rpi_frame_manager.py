@@ -79,4 +79,4 @@ class PiCameraFrameManager(FrameManager):
         self.image_resolution = None
 
     def _beep(self):
-        subprocess.call(['speaker-test', '-t', 'sine', '-f', '600'])
+        subprocess.call(['timeout', '0.125s', 'speaker-test', '-t', 'sine', '-f', '600'])
