@@ -74,26 +74,6 @@ async def send_status_report():
     await send_log_message(report['data'], 'Camera report', is_error=report['is_critical'])
 
 
-@sio.on('connect', namespace='/cam')
-async def connect(sid, environ):
-    logger.warning('Connection established: {sid} from {origin}.'.format(
-        sid=sid, origin=environ.get('HTTP_ORIGIN', 'unknown origin')
-    ))
-
-    if not app['frame_manager'].is_started:
-        logger.warning('Starting camera...')
-        app['frame_manager'].start()
-
-    app['client'] += 1
-
-    await send_camera_settings(sid)
-
-    logger.info('Initialising user with latest images.')
-    await send_latest_images_update(sid)
-
-    await send_status_report()
-
-
 @sio.on('update settings', namespace='/cam')
 async def message(sid, data):
     logger.warning('Updating camera settings to {settings}'.format(settings=data))
@@ -134,19 +114,6 @@ async def shoot(sid=None):
 @sio.on('shoot', namespace='/cam')
 async def message(sid):
     await shoot(sid)
-
-
-@sio.on('disconnect', namespace='/cam')
-def disconnect(sid):
-    logger.warning('Disconnected: %s' % sid)
-
-    app['client'] -= 1
-
-    if app['client'] < 1 and app['frame_manager'].is_started:
-        logger.warning('No more clients.')
-        if app['idle_when_alone']:
-            logger.warning('Closing camera...')
-            app['frame_manager'].stop()
 
 
 async def stream_thumbs():
@@ -191,6 +158,67 @@ async def send_status_reports():
         await sio.sleep(app['report_timeout'])
 
 
+async def postponed_camera_stop():
+    """Stops the camera after a certain time."""
+    logger.info('Entering postponed camera stop background task.')
+
+    await send_log_message('Entering postponed camera stop background task.', 'postponed_camera_stop')
+
+    time_to_stop = app['camera_idle_timeout']
+
+    while app['frame_manager'].is_started:
+        logger.info('Camera will stop after after {time_to_stop} seconds.'.format(time_to_stop=time_to_stop))
+
+        if time_to_stop <= 0:
+            app['frame_manager'].stop()
+
+            logger.info('Camera stopped after {timeout} timeout.'.format(timeout=app['camera_idle_timeout']))
+            await send_log_message(
+                'Camera stopped after {timeout} timeout.'.format(timeout=app['camera_idle_timeout']),
+                'postponed_camera_stop'
+            )
+
+        time_to_stop -= 1
+        await sio.sleep(1)
+
+
+@sio.on('connect', namespace='/cam')
+async def connect(sid, environ):
+    logger.warning('Connection established: {sid} from {origin}.'.format(
+        sid=sid, origin=environ.get('HTTP_ORIGIN', 'unknown origin')
+    ))
+
+    if not app['frame_manager'].is_started:
+        logger.warning('Starting camera...')
+        app['frame_manager'].start()
+
+    app['client'] += 1
+    if app['camera_stop_task'] is not None:
+        logger.info('Cancelling postponed camera stop.')
+        app['camera_stop_task'].cancel()
+        app['camera_stop_task'] = None
+
+    await send_camera_settings(sid)
+
+    logger.info('Initialising user with latest images.')
+    await send_latest_images_update(sid)
+
+    await send_status_report()
+
+
+@sio.on('disconnect', namespace='/cam')
+def disconnect(sid):
+    logger.warning('Disconnected: %s' % sid)
+
+    app['client'] -= 1
+
+    if app['client'] < 1 and app['frame_manager'].is_started:
+        logger.warning('No more clients.')
+        if app['idle_when_alone']:
+            logger.warning('Closing camera...')
+            app['camera_stop_task'] = sio.start_background_task(postponed_camera_stop)
+
+
 def run(driver=Drivers.RPI, frame_rate=24,
         cam_data_dir=CAM_DATA_DIR, client_build_dir=CLIENT_BUILD_DIR,
         log_level=logging.INFO,
@@ -203,6 +231,8 @@ def run(driver=Drivers.RPI, frame_rate=24,
     app['client'] = 0
     app['idle_when_alone'] = True
     app['report_timeout'] = 30
+    app['camera_idle_timeout'] = 5
+    app['camera_stop_task'] = None
 
     app['frame_manager'] = get_frame_manager(driver, cam_data_dir,
                                              url_prefix='/cam_data',
