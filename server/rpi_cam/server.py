@@ -20,6 +20,7 @@ class RPiCameraServer(object):
         self.sio.attach(self.app)
 
         self.frame_rate = frame_rate
+        self.default_auto_shoot = False
         self.auto_shoot = False
         self.shoot_timeout = 5
         self.clients = 0
@@ -27,6 +28,8 @@ class RPiCameraServer(object):
         self.report_timeout = 30
         self.camera_idle_timeout = 5
         self.camera_stop_task = None
+        self.shoot_at_startup = True
+        self.startup_shooting_timeout = 30
 
         self.frame_manager = get_frame_manager(
             driver, cam_data_dir,
@@ -45,7 +48,8 @@ class RPiCameraServer(object):
         self.sio.start_background_task(self.auto_shoot_task)
         self.sio.start_background_task(self.send_fps_updates)
         self.sio.start_background_task(self.send_status_reports)
-        
+        self.startup_shooting_task = self.sio.start_background_task(self.startup_shooting)
+
         self._define_events()
 
     def run(self):
@@ -87,10 +91,17 @@ class RPiCameraServer(object):
                 self.frame_manager.start()
 
             self.clients += 1
+
             if self.camera_stop_task is not None:
                 self.logger.info('Cancelling postponed camera stop.')
                 self.camera_stop_task.cancel()
                 self.camera_stop_task = None
+
+            if self.startup_shooting_task is not None:
+                self.logger.info('Cancelling startup time lapse.')
+                self.startup_shooting_task.cancel()
+                self.startup_shooting_task = None
+                self.auto_shoot = self.default_auto_shoot
 
             await self.send_camera_settings(sid)
 
@@ -108,8 +119,15 @@ class RPiCameraServer(object):
             if self.clients < 1 and self.frame_manager.is_started:
                 self.logger.warning('No more clients.')
                 if self.idle_when_alone:
-                    self.logger.warning('Closing camera...')
-                    self.camera_stop_task = self.sio.start_background_task(self.postponed_camera_stop)
+                    self.stop_camera()
+
+    def stop_camera(self):
+        if self.camera_idle_timeout > 0:
+            self.logger.warning('Closing camera...')
+            self.camera_stop_task = self.sio.start_background_task(self.postponed_camera_stop)
+        else:
+            self.logger.warning('Stop camera immediately...')
+            self.frame_manager.stop()
 
     async def close_all_connections(self):
         for sock in self.sio.eio.sockets.values():
@@ -142,6 +160,11 @@ class RPiCameraServer(object):
     
     async def send_status_report(self):
         report = self.frame_manager.report_state()
+
+        # We do not send empty reports
+        if len(report) < 1:
+            return
+
         if report['is_critical']:
             self.logger.error(report['data'])
         else:
@@ -167,13 +190,17 @@ class RPiCameraServer(object):
         except ImageError as e:
             await self.logger.error(e)
 
+    def should_make_preview(self):
+        """Determines whether preview should be taken and transferred to clients."""
+        return self.frame_manager.is_started and self.clients > 0
+
     async def stream_thumbs(self):
         """Send new image notification to client."""
         self.logger.debug('Starting thumbnail streaming background task.')
         while True:
             await self.sio.sleep(1 / self.frame_rate)
 
-            if self.frame_manager.is_started:
+            if self.should_make_preview():
                 preview = self.frame_manager.preview()
 
                 self.logger.debug('Sending frame update for {filename} preview'.format(filename=preview.filename))
@@ -183,11 +210,11 @@ class RPiCameraServer(object):
         """Perform periodic shoots."""
         self.logger.debug('Starting auto shoot background task.')
         while True:
-            await self.sio.sleep(self.shoot_timeout)
-    
             if self.frame_manager.is_started and self.auto_shoot:
                 await self.shoot()
-    
+
+            await self.sio.sleep(self.shoot_timeout)
+
     async def send_fps_updates(self):
         """Perform periodic fps updates."""
         self.logger.debug('Starting FPS update background task.')
@@ -223,6 +250,23 @@ class RPiCameraServer(object):
     
             time_to_stop -= 1
             await self.sio.sleep(1)
+
+    async def startup_shooting(self):
+        """Shoots certain time at the startup and then turn camera off."""
+        if not self.shoot_at_startup:
+            return
+
+        shooting_timeout = max([self.startup_shooting_timeout - self.camera_idle_timeout, 0])
+
+        self.logger.info('Info starting startup time lapse for {seconds} seconds.'.format(seconds=shooting_timeout))
+        self.auto_shoot = True
+        self.frame_manager.start()
+
+        await self.sio.sleep(shooting_timeout)
+
+        self.logger.info('Stopping startup time lapse...')
+        self.auto_shoot = self.default_auto_shoot
+        self.stop_camera()
 
 
 def run(**kwargs):
