@@ -161,7 +161,7 @@ class FrameManager(object):
         if self._previews < self.max_previews_count:
             return
 
-        self.logger.info('Truncating previews to maximum count of {count}...'.format(
+        self.logger.debug('Truncating previews to maximum count of {count}...'.format(
             count=self.max_previews_count
         ))
 

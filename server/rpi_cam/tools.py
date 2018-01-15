@@ -21,10 +21,11 @@ class SocketIOHandler(logging.Handler):
         await self.sio.emit(
             'log',
             {
-              'level': record.levelname,
-              'levelNo': record.levelno,
-              'title': record.name,
-              'text': repr(record),
+                'level': record.levelname,
+                'levelNo': record.levelno,
+                'title': '{name} - {module}.{func_name}'.format(
+                  name=record.name, module=record.module, func_name=record.funcName),
+                'text': self.formatter.format(record),
             },
             namespace=self.namespace,
         )
