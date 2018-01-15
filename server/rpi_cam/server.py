@@ -25,13 +25,14 @@ class RPiCameraServer(object):
         self.clients = 0
         self.idle_when_alone = True
         self.report_timeout = 30
-        self.app['camera_idle_timeout'] = 5
+        self.camera_idle_timeout = 5
         self.camera_stop_task = None
 
         self.frame_manager = get_frame_manager(
             driver, cam_data_dir,
             url_prefix='/cam_data',
-            logger=get_logger('rpi_cam.capture.frame_manager', level=log_level),
+            logger=get_logger('rpi_cam.capture.frame_manager', level=log_level,
+                              sio=self.sio, namespace='/cam'),
         )
 
         self.web_app_args = web_app_args
@@ -65,6 +66,7 @@ class RPiCameraServer(object):
                 self.shoot_timeout = int(data['shootTimeout'])
                 self.idle_when_alone = bool(data['idleWhenAlone'])
                 self.report_timeout = int(data['reportTimeout'])
+                self.camera_idle_timeout = int(data['cameraIdleTimeout'])
             except ValueError:
                 self.logger.error('Error updating camera settings to {settings}'.format(settings=data))
 
@@ -120,6 +122,7 @@ class RPiCameraServer(object):
             'shootTimeout': self.shoot_timeout,
             'idleWhenAlone': int(self.idle_when_alone),
             'reportTimeout': int(self.report_timeout),
+            'cameraIdleTimeout': int(self.camera_idle_timeout),
         }
 
         self.logger.info('Update user(s) with camera settings.')
@@ -141,6 +144,8 @@ class RPiCameraServer(object):
         report = self.frame_manager.report_state()
         if report['is_critical']:
             self.logger.error(report['data'])
+        else:
+            self.logger.info(report['data'])
 
     async def shoot(self, sid=None):
         if not self.frame_manager.is_started:
@@ -204,7 +209,7 @@ class RPiCameraServer(object):
         """Stops the camera after a certain time."""
         self.logger.info('Entering postponed camera stop background task.')
     
-        time_to_stop = self.app['camera_idle_timeout']
+        time_to_stop = self.camera_idle_timeout
     
         while self.frame_manager.is_started:
             self.logger.info('Camera will stop after after {time_to_stop} seconds.'.format(time_to_stop=time_to_stop))
@@ -213,7 +218,7 @@ class RPiCameraServer(object):
                 self.frame_manager.stop()
 
                 self.logger.info('Camera stopped after {timeout} timeout.'.format(
-                    timeout=self.app['camera_idle_timeout']
+                    timeout=self.camera_idle_timeout
                 ))
     
             time_to_stop -= 1

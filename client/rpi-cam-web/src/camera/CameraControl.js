@@ -102,6 +102,16 @@ class CameraControl extends Component {
             </Col>
           </FormGroup>
 
+          <FormGroup controlId="cameraIdleTimeout">
+            <Col componentClass={ControlLabel} sm={4}>
+              Camera Idle Timeout
+            </Col>
+            <Col sm={8}>
+              <FormControl type="text" value={this.state.settings.cameraIdleTimeout}
+                           name="cameraIdleTimeout" onChange={this.handleInputChange}/>
+            </Col>
+          </FormGroup>
+
           <FormGroup controlId="submit">
             <Col smOffset={4} sm={8}>
               <Button type="submit">
