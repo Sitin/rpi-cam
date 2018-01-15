@@ -8,251 +8,221 @@ from rpi_cam.capture import get_frame_manager, Drivers
 from rpi_cam.capture.frame_manager import ImageError
 
 
-logger = get_logger('rpi_cam.server')
-
-sio = socketio.AsyncServer()
-app = web.Application(middlewares=[IndexMiddleware()])
-sio.attach(app)
-
-
-async def close_all_connections():
-    for sock in sio.eio.sockets.values():
-        await sock.close()
-
-
-async def send_camera_settings(sid=None):
-    camera_setings = {
-        'frameRate': app['frame_rate'],
-        'autoShoot': int(app['auto_shoot']),
-        'shootTimeout': app['shoot_timeout'],
-        'idleWhenAlone': int(app['idle_when_alone']),
-        'reportTimeout': int(app['report_timeout']),
-    }
-
-    logger.info('Update user(s) with camera settings.')
-    await sio.emit('settings',
-                   camera_setings,
-                   sid=sid,
-                   namespace='/cam')
-
-
-async def send_log_message(msg, title=None, sid=None, is_error=False):
-    logger.info('Sending log message to client {sid} (None for all) about "{title}" (is error={is_error}).'.format(
-        sid=sid, title=title, is_error=is_error,
-    ))
-
-    msg_type = 'info'
-
-    if is_error:
-        msg_type = 'error'
-
-    await sio.emit('log',
-                   {
-                       'type': msg_type,
-                       'title': title,
-                       'text': repr(msg),
-                   },
-                   room=sid, namespace='/cam')
-
-
-async def report_error(msg, title=None, sid=None):
-    await send_log_message(msg, title=title, sid=sid, is_error=True)
-
-
-async def send_latest_images_update(sid=None):
-    try:
-        await sio.emit('latest images',
-                       [img.__dict__ for img in app['frame_manager'].get_latest_images()],
-                       sid=sid,
-                       namespace='/cam')
-    except ImageError as e:
-        await report_error(e, 'send_latest_images_update', sid=sid)
-
-
-async def send_status_report():
-    report = app['frame_manager'].report_state()
-    await send_log_message(report['data'], 'Camera report', is_error=report['is_critical'])
-
-
-@sio.on('update settings', namespace='/cam')
-async def message(sid, data):
-    logger.warning('Updating camera settings to {settings}'.format(settings=data))
-
-    try:
-        app['frame_rate'] = int(data['frameRate'])
-        app['auto_shoot'] = bool(data['autoShoot'])
-        app['shoot_timeout'] = int(data['shootTimeout'])
-        app['idle_when_alone'] = bool(data['idleWhenAlone'])
-        app['report_timeout'] = int(data['reportTimeout'])
-    except ValueError:
-        logger.error('Error updating camera settings to {settings}'.format(settings=data))
-
-    await send_camera_settings(sid)
-
-
-async def shoot(sid=None):
-    if not app['frame_manager'].is_started:
-        logger.error('Trying to shoot from idle frame manager.')
-        return
-
-    try:
-        img = app['frame_manager'].shoot()
-
-        if sid is not None and img is not None:
-            logger.debug('Sending update for recently shot image of {filename}'.format(filename=img.filename))
-            await sio.emit('image', img.__dict__, room=sid, namespace='/cam')
-
-        logger.debug('Sending latest images update.')
-        await send_latest_images_update()
-
-        await send_log_message('Successfully shot image: {filename}'.format(filename=img.filename),
-                               'Shoot image', sid=sid)
-    except ImageError as e:
-        await report_error(e, 'shoot', sid=sid)
-
-
-@sio.on('shoot', namespace='/cam')
-async def message(sid):
-    await shoot(sid)
-
-
-async def stream_thumbs():
-    """Send new image notification to client."""
-    logger.debug('Starting thumbnail streaming background task.')
-    while True:
-        await sio.sleep(1 / app['frame_rate'])
-
-        if app['frame_manager'].is_started:
-            preview = app['frame_manager'].preview()
-
-            logger.debug('Sending frame update for {filename} preview'.format(filename=preview.filename))
-            await sio.emit('preview', preview.__dict__, namespace='/cam')
-
-
-async def auto_shoot():
-    """Perform periodic shoots."""
-    logger.debug('Starting auto shoot background task.')
-    while True:
-        await sio.sleep(app['shoot_timeout'])
-
-        if app['frame_manager'].is_started and app['auto_shoot']:
-            await shoot()
-
-
-async def send_fps_updates():
-    """Perform periodic fps updates."""
-    logger.debug('Starting FPS update background task.')
-    while True:
-        await sio.sleep(1)
-
-        if app['frame_manager'].is_started:
-            logger.debug('FPS: %s' % app['frame_manager'].fps_counter.fps)
-            await sio.emit('fps', {'fps': app['frame_manager'].fps_counter.fps}, namespace='/cam')
-
-
-async def send_status_reports():
-    """Sends periodic status reports to client."""
-    logger.debug('Starting camera reporting background task.')
-    while True:
-        await send_status_report()
-        await sio.sleep(app['report_timeout'])
-
-
-async def postponed_camera_stop():
-    """Stops the camera after a certain time."""
-    logger.info('Entering postponed camera stop background task.')
-
-    await send_log_message('Entering postponed camera stop background task.', 'postponed_camera_stop')
-
-    time_to_stop = app['camera_idle_timeout']
-
-    while app['frame_manager'].is_started:
-        logger.info('Camera will stop after after {time_to_stop} seconds.'.format(time_to_stop=time_to_stop))
-
-        if time_to_stop <= 0:
-            app['frame_manager'].stop()
-
-            logger.info('Camera stopped after {timeout} timeout.'.format(timeout=app['camera_idle_timeout']))
-            await send_log_message(
-                'Camera stopped after {timeout} timeout.'.format(timeout=app['camera_idle_timeout']),
-                'postponed_camera_stop'
-            )
-
-        time_to_stop -= 1
-        await sio.sleep(1)
-
-
-@sio.on('connect', namespace='/cam')
-async def connect(sid, environ):
-    logger.warning('Connection established: {sid} from {origin}.'.format(
-        sid=sid, origin=environ.get('HTTP_ORIGIN', 'unknown origin')
-    ))
-
-    if not app['frame_manager'].is_started:
-        logger.warning('Starting camera...')
-        app['frame_manager'].start()
-
-    app['client'] += 1
-    if app['camera_stop_task'] is not None:
-        logger.info('Cancelling postponed camera stop.')
-        app['camera_stop_task'].cancel()
-        app['camera_stop_task'] = None
-
-    await send_camera_settings(sid)
-
-    logger.info('Initialising user with latest images.')
-    await send_latest_images_update(sid)
-
-    await send_status_report()
-
-
-@sio.on('disconnect', namespace='/cam')
-def disconnect(sid):
-    logger.warning('Disconnected: %s' % sid)
-
-    app['client'] -= 1
-
-    if app['client'] < 1 and app['frame_manager'].is_started:
-        logger.warning('No more clients.')
-        if app['idle_when_alone']:
-            logger.warning('Closing camera...')
-            app['camera_stop_task'] = sio.start_background_task(postponed_camera_stop)
-
-
-def run(driver=Drivers.RPI, frame_rate=24,
-        cam_data_dir=CAM_DATA_DIR, client_build_dir=CLIENT_BUILD_DIR,
-        log_level=logging.INFO,
-        **kwargs):
-    logger.setLevel(log_level)
-
-    app['frame_rate'] = frame_rate
-    app['auto_shoot'] = False
-    app['shoot_timeout'] = 5
-    app['client'] = 0
-    app['idle_when_alone'] = True
-    app['report_timeout'] = 30
-    app['camera_idle_timeout'] = 5
-    app['camera_stop_task'] = None
-
-    app['frame_manager'] = get_frame_manager(driver, cam_data_dir,
-                                             url_prefix='/cam_data',
-                                             logger=get_logger('rpi_cam.capture.frame_manager', level=log_level),
-                                             )
-
-    app.router.add_static('/cam_data', cam_data_dir, show_index=True)
-    app.router.add_static('/', client_build_dir)
-
-    logger.warning('Starting background tasks.')
-    sio.start_background_task(stream_thumbs)
-    sio.start_background_task(auto_shoot)
-    sio.start_background_task(send_fps_updates)
-    sio.start_background_task(send_status_reports)
-
-    logger.warning('Starting server with parameter set: {kwargs}.'.format(kwargs=kwargs))
-    web.run_app(app, **kwargs)
-
-    if app['frame_manager'].is_started:
-        app['frame_manager'].stop()
+class RPiCameraServer(object):
+    def __init__(self, driver=Drivers.RPI, frame_rate=24,
+                 cam_data_dir=CAM_DATA_DIR, client_build_dir=CLIENT_BUILD_DIR,
+                 log_level=logging.INFO,
+                 **web_app_args):
+        self.sio = socketio.AsyncServer()
+        self.logger = get_logger('rpi_cam.server', level=log_level, sio=self.sio, namespace='/cam')
+
+        self.app = web.Application(middlewares=[IndexMiddleware()])
+        self.sio.attach(self.app)
+
+        self.frame_rate = frame_rate
+        self.auto_shoot = False
+        self.shoot_timeout = 5
+        self.clients = 0
+        self.idle_when_alone = True
+        self.report_timeout = 30
+        self.app['camera_idle_timeout'] = 5
+        self.camera_stop_task = None
+
+        self.frame_manager = get_frame_manager(
+            driver, cam_data_dir,
+            url_prefix='/cam_data',
+            logger=get_logger('rpi_cam.capture.frame_manager', level=log_level),
+        )
+
+        self.web_app_args = web_app_args
+
+        self.app.router.add_static('/cam_data', cam_data_dir, show_index=True)
+        self.app.router.add_static('/', client_build_dir)
+
+        self.logger.warning('Starting background tasks.')
+        self.sio.start_background_task(self.stream_thumbs)
+        self.sio.start_background_task(self.auto_shoot_task)
+        self.sio.start_background_task(self.send_fps_updates)
+        self.sio.start_background_task(self.send_status_reports)
+        
+        self._define_events()
+
+    def run(self):
+        self.logger.warning('Starting server with parameter set: {kwargs}.'.format(kwargs=self.web_app_args))
+        web.run_app(self.app, **self.web_app_args)
+
+        if self.frame_manager.is_started:
+            self.frame_manager.stop()
+
+    def _define_events(self):
+        @self.sio.on('update settings', namespace='/cam')
+        async def message(sid, data):
+            self.logger.warning('Updating camera settings to {settings}'.format(settings=data))
+
+            try:
+                self.frame_rate = int(data['frameRate'])
+                self.auto_shoot = bool(data['autoShoot'])
+                self.shoot_timeout = int(data['shootTimeout'])
+                self.idle_when_alone = bool(data['idleWhenAlone'])
+                self.report_timeout = int(data['reportTimeout'])
+            except ValueError:
+                self.logger.error('Error updating camera settings to {settings}'.format(settings=data))
+
+            await self.send_camera_settings(sid)
+
+        @self.sio.on('shoot', namespace='/cam')
+        async def message(sid):
+            await self.shoot(sid)
+
+        @self.sio.on('connect', namespace='/cam')
+        async def connect(sid, environ):
+            self.logger.warning('Connection established: {sid} from {origin}.'.format(
+                sid=sid, origin=environ.get('HTTP_ORIGIN', 'unknown origin')
+            ))
+
+            if not self.frame_manager.is_started:
+                self.logger.warning('Starting camera...')
+                self.frame_manager.start()
+
+            self.clients += 1
+            if self.camera_stop_task is not None:
+                self.logger.info('Cancelling postponed camera stop.')
+                self.camera_stop_task.cancel()
+                self.camera_stop_task = None
+
+            await self.send_camera_settings(sid)
+
+            self.logger.info('Initialising user with latest images.')
+            await self.send_latest_images_update(sid)
+
+            await self.send_status_report()
+
+        @self.sio.on('disconnect', namespace='/cam')
+        def disconnect(sid):
+            self.logger.warning('Disconnected: %s' % sid)
+
+            self.clients -= 1
+
+            if self.clients < 1 and self.frame_manager.is_started:
+                self.logger.warning('No more clients.')
+                if self.idle_when_alone:
+                    self.logger.warning('Closing camera...')
+                    self.camera_stop_task = self.sio.start_background_task(self.postponed_camera_stop)
+
+    async def close_all_connections(self):
+        for sock in self.sio.eio.sockets.values():
+            await sock.close()
+    
+    async def send_camera_settings(self, sid=None):
+        camera_setings = {
+            'frameRate': self.frame_rate,
+            'autoShoot': int(self.auto_shoot),
+            'shootTimeout': self.shoot_timeout,
+            'idleWhenAlone': int(self.idle_when_alone),
+            'reportTimeout': int(self.report_timeout),
+        }
+
+        self.logger.info('Update user(s) with camera settings.')
+        await self.sio.emit('settings',
+                            camera_setings,
+                            sid=sid,
+                            namespace='/cam')
+    
+    async def send_latest_images_update(self, sid=None):
+        try:
+            await self.sio.emit('latest images',
+                                [img.__dict__ for img in self.frame_manager.get_latest_images()],
+                                sid=sid,
+                                namespace='/cam')
+        except ImageError as e:
+            await self.logger.error(e)
+    
+    async def send_status_report(self):
+        report = self.frame_manager.report_state()
+        if report['is_critical']:
+            self.logger.error(report['data'])
+
+    async def shoot(self, sid=None):
+        if not self.frame_manager.is_started:
+            self.logger.error('Trying to shoot from idle frame manager.')
+            return
+
+        try:
+            img = self.frame_manager.shoot()
+
+            if sid is not None and img is not None:
+                self.logger.debug('Sending update for recently shot image of {filename}'.format(filename=img.filename))
+                await self.sio.emit('image', img.__dict__, room=sid, namespace='/cam')
+
+            self.logger.debug('Sending latest images update.')
+            await self.send_latest_images_update()
+
+            self.logger.info('Successfully shot image: {filename}'.format(filename=img.filename))
+
+        except ImageError as e:
+            await self.logger.error(e)
+
+    async def stream_thumbs(self):
+        """Send new image notification to client."""
+        self.logger.debug('Starting thumbnail streaming background task.')
+        while True:
+            await self.sio.sleep(1 / self.frame_rate)
+
+            if self.frame_manager.is_started:
+                preview = self.frame_manager.preview()
+
+                self.logger.debug('Sending frame update for {filename} preview'.format(filename=preview.filename))
+                await self.sio.emit('preview', preview.__dict__, namespace='/cam')
+    
+    async def auto_shoot_task(self):
+        """Perform periodic shoots."""
+        self.logger.debug('Starting auto shoot background task.')
+        while True:
+            await self.sio.sleep(self.shoot_timeout)
+    
+            if self.frame_manager.is_started and self.auto_shoot:
+                await self.shoot()
+    
+    async def send_fps_updates(self):
+        """Perform periodic fps updates."""
+        self.logger.debug('Starting FPS update background task.')
+        while True:
+            await self.sio.sleep(1)
+    
+            if self.frame_manager.is_started:
+                self.logger.debug('FPS: %s' % self.frame_manager.fps_counter.fps)
+                await self.sio.emit('fps', {'fps': self.frame_manager.fps_counter.fps}, namespace='/cam')
+    
+    async def send_status_reports(self):
+        """Sends periodic status reports to client."""
+        self.logger.debug('Starting camera reporting background task.')
+        while True:
+            await self.send_status_report()
+            await self.sio.sleep(self.report_timeout)
+    
+    async def postponed_camera_stop(self):
+        """Stops the camera after a certain time."""
+        self.logger.info('Entering postponed camera stop background task.')
+    
+        time_to_stop = self.app['camera_idle_timeout']
+    
+        while self.frame_manager.is_started:
+            self.logger.info('Camera will stop after after {time_to_stop} seconds.'.format(time_to_stop=time_to_stop))
+    
+            if time_to_stop <= 0:
+                self.frame_manager.stop()
+
+                self.logger.info('Camera stopped after {timeout} timeout.'.format(
+                    timeout=self.app['camera_idle_timeout']
+                ))
+    
+            time_to_stop -= 1
+            await self.sio.sleep(1)
+
+
+def run(**kwargs):
+    server = RPiCameraServer(**kwargs)
+    server.run()
 
 
 if __name__ == '__main__':
