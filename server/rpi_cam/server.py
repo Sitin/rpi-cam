@@ -12,6 +12,7 @@ class RPiCameraServer(object):
     def __init__(self, driver=Drivers.RPI, frame_rate=24,
                  cam_data_dir=CAM_DATA_DIR, client_build_dir=CLIENT_BUILD_DIR,
                  log_level=logging.INFO,
+                 shoot_at_startup=True,
                  **web_app_args):
         self.sio = socketio.AsyncServer()
         self.logger = get_logger('rpi_cam.server', level=log_level, sio=self.sio, namespace='/cam')
@@ -28,7 +29,7 @@ class RPiCameraServer(object):
         self.report_timeout = 30
         self.camera_idle_timeout = 5
         self.camera_stop_task = None
-        self.shoot_at_startup = True
+        self.shoot_at_startup = shoot_at_startup
         self.startup_shooting_timeout = 300
 
         self.frame_manager = get_frame_manager(

@@ -49,12 +49,14 @@ def runserver(port=DEFAULT_RPI_CAM_PORT,
               client_build_dir=CLIENT_BUILD_DIR,
               cam_data_dir=CAM_DATA_DIR,
               log_level='INFO',
+              shoot_at_startup=True,
               ):
     """Runs server at <port> (default is 8080)"""
     return rpi_cam.server.run(port=int(port), frame_rate=frame_rate,
                               cam_data_dir=cam_data_dir, client_build_dir=client_build_dir,
                               path=path, host=host, driver=driver,
                               log_level=log_level,
+                              shoot_at_startup=shoot_at_startup,
                               )
 
 
