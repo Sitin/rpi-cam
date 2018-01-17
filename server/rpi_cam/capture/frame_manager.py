@@ -123,6 +123,7 @@ class FrameManager(object):
         self.fps_counter = FPSCounter()
         self.preview, self.preview_exec_measures = exec_time_patcher(self.preview)
         self.shoot, self.shoot_exec_measures = exec_time_patcher(self.shoot)
+        self.get_preview, self.get_preview_exec_measures = exec_time_patcher(self.get_preview)
 
         os.makedirs(self.path, exist_ok=True)
         self.reset_previews()
@@ -295,6 +296,7 @@ class FrameManager(object):
             'data': {
                 'preview_time': '%08.6f' % self.preview_exec_measures.avg(),
                 'shoot_time': '%08.6f' % self.shoot_exec_measures.avg(),
+                'get_preview_time': '%08.6f' % self.get_preview_exec_measures.avg(),
             }
         }
 

@@ -22,7 +22,7 @@ class PiCameraFrameManager(FrameManager):
         self.fullscreen = kwargs.get('fullscreen', picamera_options['fullscreen'])
         self.window = kwargs.get('window', picamera_options['window'])
 
-        self.shoot, self.rpi_preview_exec_measures = exec_time_patcher(self.shoot)
+        self._preview, self.rpi_preview_exec_measures = exec_time_patcher(self._preview)
 
     def start(self, sensor_mode=None):
         super().start()
@@ -63,8 +63,8 @@ class PiCameraFrameManager(FrameManager):
         stream.seek(0)
         return Image.open(stream)
 
-    def _preview(self, filename):
-        self.camera.capture(filename, resize=self.preview_resolution)
+    # def _preview(self, filename):
+    #     self.camera.capture(filename, resize=self.preview_resolution)
 
     def _capture_image(self, filename):
         self.camera.capture(filename)
