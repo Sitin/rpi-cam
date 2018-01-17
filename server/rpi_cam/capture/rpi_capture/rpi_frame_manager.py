@@ -4,6 +4,7 @@ import subprocess
 import picamera
 from PIL import Image
 
+from rpi_cam.tools import exec_time_patcher
 from rpi_cam.capture.frame_manager import FrameManager
 from rpi_cam.capture.rpi_capture.picamera_options import DEFAULT_SENSOR_MODE, get_picamera_options
 
@@ -20,6 +21,8 @@ class PiCameraFrameManager(FrameManager):
         self.resolution = kwargs.get('resolution', picamera_options['resolution'])
         self.fullscreen = kwargs.get('fullscreen', picamera_options['fullscreen'])
         self.window = kwargs.get('window', picamera_options['window'])
+
+        self.shoot, self.rpi_preview_exec_measures = exec_time_patcher(self.shoot)
 
     def start(self, sensor_mode=None):
         super().start()
@@ -83,6 +86,9 @@ class PiCameraFrameManager(FrameManager):
         state = super().report_state()
 
         state['temperature'] = subprocess.getoutput('/opt/vc/bin/vcgencmd measure_temp')
+        state['rpi_preview_time'] = '%08.6f' % self.rpi_preview_exec_measures.avg()
+
+        self.rpi_preview_exec_measures.truncate()
 
         return state
 

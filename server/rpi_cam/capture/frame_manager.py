@@ -4,7 +4,6 @@ import glob
 from PIL import Image
 import os
 import shutil
-import time
 import uuid
 
 from rpi_cam.tools import get_logger, exec_time_patcher
