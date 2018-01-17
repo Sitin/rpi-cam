@@ -12,7 +12,7 @@ class OpenCVFrameManager(FrameManager):
 
     def get_image(self):
         if self.camera is None:
-            self.start()
+            return None
 
         ret, frame = self.camera.read()
         if ret:
