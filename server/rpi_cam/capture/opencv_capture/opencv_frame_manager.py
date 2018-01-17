@@ -11,6 +11,9 @@ class OpenCVFrameManager(FrameManager):
         self.image_resolution = (self.camera.get(3), self.camera.get(4))
 
     def get_image(self):
+        if self.camera is None:
+            self.start()
+
         ret, frame = self.camera.read()
         if ret:
             return frame
