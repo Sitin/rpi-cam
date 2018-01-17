@@ -31,6 +31,7 @@ class RPiCameraServer(object):
         self.camera_stop_task = None
         self.shoot_at_startup = shoot_at_startup
         self.startup_shooting_timeout = 300
+        self.latest_preview = None
 
         self.frame_manager = get_frame_manager(
             driver, cam_data_dir,
@@ -42,6 +43,7 @@ class RPiCameraServer(object):
         self.web_app_args = web_app_args
 
         self.app.router.add_static('/cam_data', cam_data_dir, show_index=True)
+        self.app.router.add_get('/latest', self.get_latest_preview)
         self.app.router.add_static('/', client_build_dir)
 
         self.logger.warning('Starting background tasks.')
@@ -122,6 +124,12 @@ class RPiCameraServer(object):
                 if self.idle_when_alone:
                     self.stop_camera()
 
+    async def get_latest_preview(self, request):
+        if self.latest_preview is None:
+            await self.make_preview()
+
+        return web.json_response(self.latest_preview.__dict__)
+
     def stop_camera(self):
         if self.camera_idle_timeout > 0:
             self.logger.warning('Closing camera...')
@@ -195,6 +203,13 @@ class RPiCameraServer(object):
         """Determines whether preview should be taken and transferred to clients."""
         return self.frame_manager.is_started and self.clients > 0
 
+    async def make_preview(self):
+        preview = self.frame_manager.preview()
+        self.latest_preview = preview
+
+        self.logger.debug('Sending frame update for {filename} preview'.format(filename=preview.filename))
+        await self.sio.emit('preview', preview.__dict__, namespace='/cam')
+
     async def stream_thumbs(self):
         """Send new image notification to client."""
         self.logger.debug('Starting thumbnail streaming background task.')
@@ -202,10 +217,7 @@ class RPiCameraServer(object):
             await self.sio.sleep(1 / self.frame_rate)
 
             if self.should_make_preview():
-                preview = self.frame_manager.preview()
-
-                self.logger.debug('Sending frame update for {filename} preview'.format(filename=preview.filename))
-                await self.sio.emit('preview', preview.__dict__, namespace='/cam')
+                await self.make_preview()
     
     async def auto_shoot_task(self):
         """Perform periodic shoots."""
