@@ -63,8 +63,8 @@ class PiCameraFrameManager(FrameManager):
         stream.seek(0)
         return Image.open(stream)
 
-    # def _preview(self, filename):
-    #     self.camera.capture(filename, resize=self.preview_resolution)
+    def _preview(self, filename):
+        self.camera.capture(filename, resize=self.preview_resolution)
 
     def _capture_image(self, filename):
         self.camera.capture(filename)
