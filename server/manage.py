@@ -33,9 +33,9 @@ NGINX_DEFAULTS = {
 
 SUPERVISOR_DEFAULTS = {
     'command': os.path.join(SERVER_DIR, 'manage.py') + ' runserver',
-    'args': [
+    'args': ''.join([
         '--log-level INFO',
-    ],
+    ]),
 }
 
 LATEST_CLIENT_BUILD_URL = 'https://www.dropbox.com/s/khbgbpa7xxeqgfj/rpi_cam-client-build.tar.gz?dl=1'
@@ -98,7 +98,7 @@ def supervisor_conf(path=DEFAULT_SUPERVISOR_CONF_FILE,
     """Generates nginx config"""
     with open(SUPERVISOR_CONF_TEMPLATE) as tmpl:
         template = Template(tmpl.read())
-        config = template.render(command=command, args=' '.join(args), project_dir=PROJECT_DIR, log_dir=log_dir)
+        config = template.render(command=command, args=args, project_dir=PROJECT_DIR, log_dir=log_dir)
 
         with open(path, 'w') as conf:
             conf.write(config)

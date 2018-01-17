@@ -138,7 +138,7 @@ sudo apt-get install supervisor
 Then create configuration file:
 
 ```sh
-server/manage.py supervisor_conf
+server/manage.py supervisor_conf [--args="arguments for server app>"]
 ```
 
 Copy it into Supervisor configuration directory:
@@ -153,7 +153,9 @@ And restart the service:
 sudo service supervisor restart
 ```
 
-### Setting up Samba (RPi only)
+### Setting up Samba
+
+This instruction applies for RPi only and may lead to performance reduction.
 
 Install Samba binnaries
 
