@@ -80,12 +80,11 @@ class PiCameraFrameManager(FrameManager):
             self._capture_image(filename)
 
     def report_state(self):
-        return {
-            'is_critical': False,
-            'data': {
-                'temperature': subprocess.getoutput('/opt/vc/bin/vcgencmd measure_temp'),
-            }
-        }
+        state = super().report_state()
+
+        state['temperature'] = subprocess.getoutput('/opt/vc/bin/vcgencmd measure_temp')
+
+        return state
 
     def write_img(self, filename, img):
         img.save(filename)

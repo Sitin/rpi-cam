@@ -4,6 +4,7 @@ import glob
 from PIL import Image
 import os
 import shutil
+import time
 import uuid
 
 from rpi_cam.tools import get_logger
@@ -121,6 +122,7 @@ class FrameManager(object):
         self.beep_on_shoot = beep_on_shoot
 
         self.fps_counter = FPSCounter()
+        self.preview_time_deltas = []
 
         os.makedirs(self.path, exist_ok=True)
         self.reset_previews()
@@ -226,7 +228,10 @@ class FrameManager(object):
         filename = self.get_preview_filename()
 
         self._preview(filename)
+        start = time.time()
         self._previews += 1
+        end = time.time()
+        self.preview_time_deltas.append(end - start)
 
         self.fps_counter.tick()
 
@@ -288,9 +293,16 @@ class FrameManager(object):
             self.write_img(filename, img)
 
     def report_state(self):
+        if len(self.preview_time_deltas):
+            preview_time = sum(self.preview_time_deltas) / len(self.preview_time_deltas)
+        else:
+            preview_time = None
+
         return {
             'is_critical': False,
-            'data': {}
+            'data': {
+                'preview_time': preview_time,
+            }
         }
 
     @abc.abstractmethod
