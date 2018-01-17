@@ -50,7 +50,7 @@ def runserver(port=DEFAULT_RPI_CAM_PORT,
               client_build_dir=CLIENT_BUILD_DIR,
               cam_data_dir=CAM_DATA_DIR,
               log_level='INFO',
-              shoot_at_startup=True,
+              shoot_at_startup=False,
               preview_sensor_mode=7,
               preview_resolution=DEFAULT_PREVIEW_RESOLUTION,
               ):
