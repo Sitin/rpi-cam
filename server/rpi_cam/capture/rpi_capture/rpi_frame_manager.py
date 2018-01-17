@@ -85,8 +85,9 @@ class PiCameraFrameManager(FrameManager):
     def report_state(self):
         state = super().report_state()
 
-        state['temperature'] = subprocess.getoutput('/opt/vc/bin/vcgencmd measure_temp')
-        state['rpi_preview_time'] = '%08.6f' % self.rpi_preview_exec_measures.avg()
+        state['data']['temperature'] = subprocess.getoutput('/opt/vc/bin/vcgencmd measure_temp')
+        state['data']['rpi_preview_time'] = '%08.6f' % self.rpi_preview_exec_measures.avg()
+        state['data']['driver'] = 'PiCamera'
 
         self.rpi_preview_exec_measures.truncate()
 

@@ -26,6 +26,13 @@ class OpenCVFrameManager(FrameManager):
         else:
             return None
 
+    def report_state(self):
+        state = super().report_state()
+
+        state['data']['driver'] = 'OpenCV'
+
+        return state
+
     def write_img(self, filename, img):
         cv2.imwrite(filename, img)
 
