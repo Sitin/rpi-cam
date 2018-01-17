@@ -17,16 +17,18 @@ _sensor_mode_to_framerate = {
     4: 15,  # Maximum is 40
     5: 15,  # Maximum is 40
     6: 30,  # Maximum is 90
-    7: 90,  # Maximum is 90
+    7: 30,  # Maximum is 90
 }
 
 
 DEFAULT_SENSOR_MODE = 4
+DEFAULT_PREVIEW_SENSOR_MODE = 7
 
 
 def get_picamera_options(sensor_mode=DEFAULT_SENSOR_MODE):
     return {
         'sensor_mode': sensor_mode,
+        'preview_sensor_mode': DEFAULT_PREVIEW_SENSOR_MODE,
         'framerate': _sensor_mode_to_framerate[sensor_mode],
         'resolution': _sensor_mode_to_resolution[sensor_mode],
         'fullscreen': False,

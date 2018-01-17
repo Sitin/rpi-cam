@@ -14,21 +14,27 @@ class PiCameraFrameManager(FrameManager):
 
         picamera_options = get_picamera_options(kwargs.get('sensor_mode', DEFAULT_SENSOR_MODE))
 
+        self.preview_sensor_mode = kwargs.get('preview_sensor_mode', picamera_options['preview_sensor_mode'])
         self.sensor_mode = kwargs.get('sensor_mode', picamera_options['sensor_mode'])
         self.framerate = kwargs.get('framerate', picamera_options['framerate'])
         self.resolution = kwargs.get('resolution', picamera_options['resolution'])
         self.fullscreen = kwargs.get('fullscreen', picamera_options['fullscreen'])
         self.window = kwargs.get('window', picamera_options['window'])
 
-    def start(self):
+    def start(self, sensor_mode=None):
         super().start()
-        self.camera = picamera.PiCamera(sensor_mode=self.sensor_mode,
+
+        if sensor_mode is None:
+            sensor_mode = self.preview_sensor_mode
+
+        self.camera = picamera.PiCamera(sensor_mode=sensor_mode,
                                         resolution=self.resolution,
                                         framerate=self.framerate,
                                         )
 
-        self.logger.info('Create RPi camera instance: {camera}'.format(
-            camera=repr(self.camera)
+        self.logger.info('Create RPi camera instance: {camera} with sensor mode {sensor_mode}.'.format(
+            camera=repr(self.camera),
+            sensor_mode=sensor_mode,
         ))
 
         self.camera.start_preview()
@@ -36,7 +42,7 @@ class PiCameraFrameManager(FrameManager):
         if self.window is not None:
             self.camera.preview.window = self.window
 
-        self.logger.info('Starting RPi camera preview with: {preview}'.format(
+        self.logger.info('Starting RPi camera preview with: {preview}.'.format(
             preview=repr(self.camera.preview)
         ))
 
@@ -57,9 +63,21 @@ class PiCameraFrameManager(FrameManager):
     def _preview(self, filename):
         self.camera.capture(filename, resize=self.preview_resolution)
 
-    def _shoot(self, filename):
+    def _capture_image(self, filename):
         self.camera.capture(filename)
         self.image_resolution = Image.open(filename).size
+
+    def _shoot(self, filename):
+        if not self.sensor_mode == self.preview_sensor_mode:
+            self.stop()
+            self.start(self.sensor_mode)
+
+            self._capture_image(filename)
+
+            self.stop()
+            self.start()
+        else:
+            self._capture_image(filename)
 
     def report_state(self):
         return {
