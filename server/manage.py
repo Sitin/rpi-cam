@@ -10,6 +10,7 @@ from jinja2 import Template
 
 import rpi_cam.server
 from rpi_cam.capture import Drivers
+from rpi_cam.capture.frame_manager import DEFAULT_PREVIEW_RESOLUTION
 from rpi_cam.tools import SERVER_DIR, CAM_DATA_DIR, CLIENT_BUILD_DIR, PROJECT_DIR
 
 
@@ -50,6 +51,8 @@ def runserver(port=DEFAULT_RPI_CAM_PORT,
               cam_data_dir=CAM_DATA_DIR,
               log_level='INFO',
               shoot_at_startup=True,
+              preview_sensor_mode=7,
+              preview_resolution=DEFAULT_PREVIEW_RESOLUTION,
               ):
     """Runs server at <port> (default is 8080)"""
     return rpi_cam.server.run(port=int(port), frame_rate=frame_rate,
@@ -57,6 +60,8 @@ def runserver(port=DEFAULT_RPI_CAM_PORT,
                               path=path, host=host, driver=driver,
                               log_level=log_level,
                               shoot_at_startup=shoot_at_startup,
+                              preview_sensor_mode=preview_sensor_mode,
+                              preview_resolution=preview_resolution,
                               )
 
 

@@ -9,12 +9,20 @@ import uuid
 from rpi_cam.tools import get_logger
 
 
-DEFAULT_PREVIEW_RESOLUTION = (320, 240)
+DEFAULT_PREVIEW_RESOLUTION = '320x240'
 DEFAULT_THUMBNAIL_BOUNDS = (320, 240)
 DEFAULT_MAX_PREVIEWS_COUNT = 24 * 5
 DEFAULT_LATEST_IMAGES_COUNT = 6
 
 default_logger = get_logger('rpi_cam.capture.frame_manager.default')
+
+
+def get_preview_resolution(raw_value):
+    if type(raw_value) is str:
+        pair = raw_value.split('x')
+        return int(pair[0]), int(pair[1])
+    else:
+        return raw_value
 
 
 class ImageError(OSError):
@@ -100,7 +108,7 @@ class FrameManager(object):
         self.path = path
         self.preview_path = os.path.join(path, 'previews')
         self.gallery_path = os.path.join(path, 'gallery')
-        self.preview_resolution = preview_resolution
+        self.preview_resolution = get_preview_resolution(preview_resolution)
         self.thumbnail_bounds = thumbnail_bounds
         self.image_resolution = None
         self.extension = 'jpg'

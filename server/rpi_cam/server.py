@@ -5,7 +5,8 @@ import socketio
 
 from rpi_cam.tools import get_logger, CLIENT_BUILD_DIR, CAM_DATA_DIR
 from rpi_cam.capture import get_frame_manager, Drivers
-from rpi_cam.capture.frame_manager import ImageError
+from rpi_cam.capture.frame_manager import ImageError, DEFAULT_PREVIEW_RESOLUTION
+from rpi_cam.capture.rpi_capture.picamera_options import DEFAULT_PREVIEW_SENSOR_MODE
 
 
 class RPiCameraServer(object):
@@ -13,6 +14,8 @@ class RPiCameraServer(object):
                  cam_data_dir=CAM_DATA_DIR, client_build_dir=CLIENT_BUILD_DIR,
                  log_level=logging.INFO,
                  shoot_at_startup=True,
+                 preview_sensor_mode=DEFAULT_PREVIEW_SENSOR_MODE,
+                 preview_resolution=DEFAULT_PREVIEW_RESOLUTION,
                  **web_app_args):
         self.sio = socketio.AsyncServer()
         self.logger = get_logger('rpi_cam.server', level=log_level, sio=self.sio, namespace='/cam')
@@ -38,6 +41,8 @@ class RPiCameraServer(object):
             url_prefix='/cam_data',
             logger=get_logger('rpi_cam.capture.frame_manager', level=log_level,
                               sio=self.sio, namespace='/cam'),
+            preview_sensor_mode=preview_sensor_mode,
+            preview_resolution=preview_resolution,
         )
 
         self.web_app_args = web_app_args

@@ -34,6 +34,3 @@ def get_picamera_options(sensor_mode=DEFAULT_SENSOR_MODE):
         'fullscreen': False,
         'window': (10, 10, 320, 240),
     }
-
-
-RPI_DEFAULT_OPTIONS = get_picamera_options()
