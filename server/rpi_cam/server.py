@@ -13,7 +13,7 @@ class RPiCameraServer(object):
     def __init__(self, driver=Drivers.RPI, frame_rate=24,
                  cam_data_dir=CAM_DATA_DIR, client_build_dir=CLIENT_BUILD_DIR,
                  log_level=logging.INFO,
-                 shoot_at_startup=True,
+                 shoot_at_startup=False,
                  preview_sensor_mode=DEFAULT_PREVIEW_SENSOR_MODE,
                  preview_resolution=DEFAULT_PREVIEW_RESOLUTION,
                  **web_app_args):
