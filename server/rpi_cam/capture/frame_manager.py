@@ -7,7 +7,7 @@ import shutil
 import time
 import uuid
 
-from rpi_cam.tools import get_logger
+from rpi_cam.tools import get_logger, exec_time_patcher
 
 
 DEFAULT_PREVIEW_RESOLUTION = '320x240'
@@ -122,7 +122,8 @@ class FrameManager(object):
         self.beep_on_shoot = beep_on_shoot
 
         self.fps_counter = FPSCounter()
-        self.preview_time_deltas = []
+        self.preview, self.preview_exec_measures = exec_time_patcher(self.preview)
+        self.shoot, self.shoot_exec_measures = exec_time_patcher(self.shoot)
 
         os.makedirs(self.path, exist_ok=True)
         self.reset_previews()
@@ -228,10 +229,7 @@ class FrameManager(object):
         filename = self.get_preview_filename()
 
         self._preview(filename)
-        start = time.time()
         self._previews += 1
-        end = time.time()
-        self.preview_time_deltas.append(end - start)
 
         self.fps_counter.tick()
 
@@ -293,17 +291,18 @@ class FrameManager(object):
             self.write_img(filename, img)
 
     def report_state(self):
-        if len(self.preview_time_deltas):
-            preview_time = sum(self.preview_time_deltas) / len(self.preview_time_deltas)
-        else:
-            preview_time = None
-
-        return {
+        state = {
             'is_critical': False,
             'data': {
-                'preview_time': preview_time,
+                'preview_time': '%08.6f' % self.preview_exec_measures.avg(),
+                'shoot_time': '%08.6f' % self.shoot_exec_measures.avg(),
             }
         }
+
+        self.preview_exec_measures.truncate()
+        self.shoot_exec_measures.truncate()
+
+        return state
 
     @abc.abstractmethod
     def start(self):

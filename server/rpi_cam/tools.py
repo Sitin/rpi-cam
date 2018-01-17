@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import time
 
 
 APP_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -56,3 +57,41 @@ def get_logger(name, level=logging.INFO, sio=None, namespace=None):
         logger.addHandler(sio_handler)
 
     return logger
+
+
+class TimeMeasures(object):
+    def __init__(self, max_size=10):
+        self.max_size = max_size
+        self.measures = []
+
+    def append(self, item):
+        self.measures.append(item)
+
+    def avg(self):
+        if len(self.measures) > 0:
+            return sum(self.measures) / len(self.measures)
+        else:
+            return -1
+
+    def reset(self):
+        self.measures = []
+
+    def truncate(self):
+        if len(self.measures) > self.max_size:
+            self.measures = self.measures[int(self.max_size / 2):]
+
+
+def exec_time_patcher(fn):
+    measures = TimeMeasures()
+
+    def decorator_fn(*args, **kwargs):
+        start = time.time()
+
+        result = fn(*args, **kwargs)
+
+        end = time.time()
+        measures.append(end - start)
+
+        return result
+
+    return decorator_fn, measures
