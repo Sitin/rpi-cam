@@ -3,6 +3,7 @@ import pygame.camera
 from PIL import Image
 
 from rpi_cam.capture.frame_manager import FrameManager
+from rpi_cam.tools import exec_time_patcher
 
 
 DEFAULT_TARGET_RESOLUTION = (1640, 1232)
@@ -15,6 +16,8 @@ class PyGameFrameManager(FrameManager):
         self.target_resolution = self.image_resolution
         if self.target_resolution is None:
             self.target_resolution = DEFAULT_TARGET_RESOLUTION
+
+        self._preview, self.pygame_preview_exec_measures = exec_time_patcher(self._preview)
 
         pygame.camera.init()
 
@@ -56,6 +59,9 @@ class PyGameFrameManager(FrameManager):
         state = super().report_state()
 
         state['data']['driver'] = 'PyGame'
+        state['data']['rpi_preview_time'] = '%08.6f' % self.pygame_preview_exec_measures.avg()
+
+        self.pygame_preview_exec_measures.truncate()
 
         return state
 
