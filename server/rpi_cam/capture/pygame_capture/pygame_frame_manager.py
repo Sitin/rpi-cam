@@ -72,7 +72,7 @@ class PyGameFrameManager(FrameManager):
 
         image = self.camera.get_image()
         pygame.image.save(image, filename)
-        self.image_resolution = image.size
+        self.image_resolution = image.get_size()
 
         self.stop()
         self.start(image_size=self.preview_resolution)
