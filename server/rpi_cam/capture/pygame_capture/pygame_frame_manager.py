@@ -22,7 +22,7 @@ class PyGameFrameManager(FrameManager):
         super().start()
 
         if image_size is None:
-            image_size = self.image_resolution
+            image_size = self.target_resolution
 
         self.camera = pygame.camera.Camera(pygame.camera.list_cameras()[0], image_size)
         self.camera.start()
