@@ -46,12 +46,12 @@ def runserver(port=DEFAULT_RPI_CAM_PORT,
               frame_rate=DEFAULT_FRAME_RATE,
               path=DEFAULT_SOCKET,
               host=None,
-              driver=Drivers.RPI,
+              driver=Drivers.PYGAME,
               client_build_dir=CLIENT_BUILD_DIR,
               cam_data_dir=CAM_DATA_DIR,
               log_level='INFO',
               shoot_at_startup=False,
-              preview_sensor_mode=7,
+              preview_sensor_mode=7,  # Make sense only for PiCamera
               preview_resolution=DEFAULT_PREVIEW_RESOLUTION,
               ):
     """Runs server at <port> (default is 8080)"""
