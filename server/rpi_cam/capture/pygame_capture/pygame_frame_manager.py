@@ -59,7 +59,7 @@ class PyGameFrameManager(FrameManager):
         state = super().report_state()
 
         state['data']['driver'] = 'PyGame'
-        state['data']['rpi_preview_time'] = '%08.6f' % self.pygame_preview_exec_measures.avg()
+        state['data']['pygame_preview_time'] = '%08.6f' % self.pygame_preview_exec_measures.avg()
 
         self.pygame_preview_exec_measures.truncate()
 
